@@ -163,40 +163,21 @@ VALID_STRATEGIES = ("fixed", "rotate", "random")
 
 @dataclass(frozen=True)
 class ThemeConfig:
-    """Theme preset, color mode, selection strategy, and optional themed UI labels."""
+    """Theme rendering settings loaded from profile.toml."""
 
-    name: str = "cyberpunk"
-    mode: str = "dark"
-    strategy: str = "fixed"
-    pool: tuple[str, ...] = VALID_THEMES
+    mode: str = "adaptive"
     scifi_labels: bool = False
 
     @classmethod
     def from_dict(cls, raw: dict | None) -> ThemeConfig:
         if not raw:
             return cls()
-        name = str(raw.get("name", "")).strip().lower()
-        mode = str(raw.get("mode", "dark")).strip().lower()
-        strategy = str(raw.get("strategy", "fixed" if name else "rotate")).strip().lower()
-        raw_pool = raw.get("pool") or list(VALID_THEMES)
-        pool = tuple(str(item).strip().lower() for item in raw_pool if str(item).strip())
-        if not pool:
-            pool = VALID_THEMES
-        for item in pool:
-            if item not in VALID_THEMES:
-                raise ValueError(f"Unknown theme in pool {item!r}; expected one of {VALID_THEMES}")
-        if name and name not in VALID_THEMES:
-            raise ValueError(f"Unknown theme name {name!r}; expected one of {VALID_THEMES}")
+        mode = str(raw.get("mode", "adaptive")).strip().lower()
         if mode not in VALID_MODES:
             raise ValueError(f"Unknown theme mode {mode!r}; expected one of {VALID_MODES}")
-        if strategy not in VALID_STRATEGIES:
-            raise ValueError(f"Unknown theme strategy {strategy!r}; expected one of {VALID_STRATEGIES}")
         themed_labels = raw.get("themed_labels", raw.get("scifi_labels", False))
         return cls(
-            name=name,
             mode=mode,
-            strategy=strategy,
-            pool=pool,
             scifi_labels=bool(themed_labels),
         )
 
@@ -208,7 +189,7 @@ class ThemeConfig:
         strategy_override: str | None = None,
         today: datetime.date | None = None,
     ) -> tuple[str, str]:
-        """Resolve concrete (theme_name, mode) applying CLI overrides and selection strategy."""
+        """Resolve concrete (theme_name, mode) from CLI theme/strategy/mode arguments."""
         mode = (mode_override or self.mode).strip().lower()
         if mode not in VALID_MODES:
             raise ValueError(f"Unknown theme mode {mode!r}; expected one of {VALID_MODES}")
@@ -219,16 +200,16 @@ class ThemeConfig:
                 raise ValueError(f"Unknown theme name {name!r}; expected one of {VALID_THEMES}")
             return name, mode
 
-        strategy = (strategy_override or self.strategy).strip().lower()
+        strategy = (strategy_override or "rotate").strip().lower()
         if strategy not in VALID_STRATEGIES:
             raise ValueError(f"Unknown theme strategy {strategy!r}; expected one of {VALID_STRATEGIES}")
 
-        if strategy == "rotate" or (not self.name and strategy != "random"):
-            day = today or datetime.date.today()
-            return self.pool[day.toordinal() % len(self.pool)], mode
         if strategy == "random":
-            return random.choice(self.pool), mode
-        return self.name or self.pool[0], mode
+            return random.choice(VALID_THEMES), mode
+        if strategy == "fixed":
+            return VALID_THEMES[0], mode
+        day = today or datetime.date.today()
+        return VALID_THEMES[day.toordinal() % len(VALID_THEMES)], mode
 
 
 @dataclass(frozen=True)

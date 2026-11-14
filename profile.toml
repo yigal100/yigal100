@@ -1,8 +1,5 @@
 [theme]
-name = ""               # leave empty to use strategy, or pin: "astrometrics" | "arcane-architect" | "studio" | "cyberpunk"
 mode = "adaptive"       # "dark" | "light" | "adaptive"
-strategy = "rotate"     # "fixed" | "rotate" | "random"
-pool = ["astrometrics", "arcane-architect", "studio", "cyberpunk"]
 themed_labels = true    # true for theme-specific section names (e.g. telemetry/missions, uplinks/night-city, quests/tomes)
 
 [profile]
