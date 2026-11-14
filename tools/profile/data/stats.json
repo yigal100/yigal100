@@ -1,0 +1,32 @@
+{
+  "updated": "2026-11-14",
+  "year": 2026,
+  "created_at": "2011-01-23T22:19:45Z",
+  "stars": 0,
+  "forks": 0,
+  "followers": 4,
+  "commits_year": 120,
+  "commits_all": 350,
+  "prs": 12,
+  "prs_merged": 10,
+  "streak_current": 1,
+  "streak_longest": 14,
+  "hackathon_wins": 0,
+  "languages": {
+    "Rust": 350000,
+    "TypeScript": 280000,
+    "Python": 180000,
+    "C#": 140000,
+    "Go": 95000,
+    "C++": 85000
+  },
+  "repo_stars": {
+    "second-brain": 0,
+    "photon": 0,
+    "quartz": 0,
+    "yigal100": 0
+  },
+  "dev": {},
+  "contributions_year": 145,
+  "contributions_all": 450
+}
