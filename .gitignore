@@ -1,4 +1,20 @@
-__pycache__/
-*.pyc
+# .gitignore
+
+# Environment & Dependencies
 .venv/
+env/
+venv/
+__pycache__/
+*.py[cod]
+
+# Local Tooling & Mise Overrides
+*.local.toml
+.mise/*.local.toml
+.mise.local.toml
+.mise.*.local.toml
+
+# IDE & OS
 .DS_Store
+.idea/
+*.swp
+*~

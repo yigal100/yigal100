@@ -1,0 +1,25 @@
+# Sample local mise configuration for developers
+#
+# Use this template to configure developer-specific tool overrides, environment
+# variables, or local development settings without modifying versioned project config.
+#
+# To use:
+#   cp .mise/config.local.toml.sample .mise/config.local.toml
+#   # or at repository root:
+#   # cp .mise/config.local.toml.sample mise.local.toml
+#
+# All *.local.toml files are ignored by git.
+
+[tools]
+# Override or pin additional language runtimes and developer tools:
+# python = "3.12"
+
+[env]
+# Define local environment variables:
+# PROFILE_TOKEN = "ghp_..."
+# GITHUB_TOKEN = "ghp_..."
+# DEV_API_KEY = "..."
+
+[settings]
+# Temporarily relax lockfile enforcement when testing new tool versions:
+# locked = false
