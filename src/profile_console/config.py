@@ -155,7 +155,7 @@ VALID_STRATEGIES = ("fixed", "rotate", "random")
 
 @dataclass(frozen=True)
 class ThemeConfig:
-    """Theme preset, color mode, selection strategy, and optional UI label style."""
+    """Theme preset, color mode, selection strategy, and optional themed UI labels."""
 
     name: str = "cyberpunk"
     mode: str = "dark"
@@ -183,12 +183,13 @@ class ThemeConfig:
             raise ValueError(f"Unknown theme mode {mode!r}; expected one of {VALID_MODES}")
         if strategy not in VALID_STRATEGIES:
             raise ValueError(f"Unknown theme strategy {strategy!r}; expected one of {VALID_STRATEGIES}")
+        themed_labels = raw.get("themed_labels", raw.get("scifi_labels", False))
         return cls(
             name=name,
             mode=mode,
             strategy=strategy,
             pool=pool,
-            scifi_labels=bool(raw.get("scifi_labels", False)),
+            scifi_labels=bool(themed_labels),
         )
 
     def resolve(

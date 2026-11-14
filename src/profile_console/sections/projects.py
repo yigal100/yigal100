@@ -12,8 +12,8 @@ CARD_H = 200
 
 def build_projects_head(theme: Theme) -> str:
     """Render the ~/projects section header."""
+    sec_title = theme.section_label("projects")
     if theme.is_modern:
-        sec_title = theme.section_label("projects", "missions")
         sub = "active mission dossiers" if theme.scifi_labels else "featured repositories"
         body = (
             heading(44, sec_title, "// 04", theme)
@@ -22,11 +22,11 @@ def build_projects_head(theme: Theme) -> str:
         )
         return slice_svg(120, body, title="Projects", desc="Projects", text=f"{sec_title}04{sub}", theme=theme)
     body = (
-        heading(44, "projects", "// 04", theme)
+        heading(44, sec_title, "// 04", theme)
         + f'''
 <g class="ln" style="animation-delay:.2s"><text x="{theme.text_x}" y="96" class="dim"><tspan class="gr">$</tspan> ls -l ~/projects</text></g>'''
     )
-    return slice_svg(120, body, title="Projects", desc="Projects", text="~/projects// 02$ ls -l", theme=theme)
+    return slice_svg(120, body, title="Projects", desc="Projects", text=f"~/{sec_title}// 04$ ls -l ~/projects", theme=theme)
 
 
 def build_card(
@@ -82,12 +82,12 @@ def build_card(
 </g>'''
     else:
         box = f"M{x0} {y0}H{x0 + cw - cut}L{x0 + cw} {y0 + cut}V{y0 + ch}H{x0 + cut}L{x0} {y0 + ch - cut}Z"
+        title_glow = "" if theme.is_light else f'<text x="{tx}" y="{y0 + 34}" font-weight="700" fill="{cyan}" filter="url(#g)" opacity=".6" style="font-size:17px">{esc(project.name)}</text>\n'
         body = f'''<g class="ln" style="animation-delay:{delay:.2f}s">
 <path d="{box}" fill="{cyan}" fill-opacity=".035"/>
 <path d="{box}" fill="none" stroke="{cyan}" stroke-opacity=".4"/>
 <path d="M{x0 + cw - cut} {y0}L{x0 + cw} {y0 + cut}" stroke="{cyan}" stroke-width="2"/>
-<text x="{tx}" y="{y0 + 34}" font-weight="700" fill="{cyan}" filter="url(#g)" opacity=".6" style="font-size:17px">{esc(project.name)}</text>
-<text x="{tx}" y="{y0 + 34}" font-weight="700" class="cy" style="font-size:17px">{esc(project.name)}</text>
+{title_glow}<text x="{tx}" y="{y0 + 34}" font-weight="700" class="cy" style="font-size:17px">{esc(project.name)}</text>
 <path d="M{tx + title_w + 11} {y0 + 31}l8-8M{tx + title_w + 13} {y0 + 23}h6v6" fill="none" stroke="{cyan}" stroke-width="1.6"/>
 <rect x="{tx}" y="{y0 + 46}" width="{tag_w}" height="18" fill="none" stroke="{tag_color}" stroke-opacity=".8"/>
 <text x="{tx + 8}" y="{y0 + 59}" letter-spacing="1" fill="{tag_color}" style="font-size:11px">{esc(project.tag)}</text>

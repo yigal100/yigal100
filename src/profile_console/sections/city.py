@@ -6,14 +6,51 @@ import datetime
 import hashlib
 import math
 from collections.abc import Iterator
+from typing import TypedDict
 
 from profile_console.svg import Theme, heading, slice_svg
 
 CITY_TW, CITY_TH = 25, 12.5  # iso tile width / height
 CITY_OX, CITY_OY = 152.5, 262  # grid origin inside the 880-wide slice
 CITY_HMAX = 118  # tallest building, px
-ROOFS = ["#0c2d6b", "#1554c0", "#2f81f7", "#1fd5ff"]  # navy → electric blue, matching the neon console
-WIN_ON, WIN_ON_SIDE, WIN_OFF = "#7df9ff", "#4cc9f0", "#111827"
+
+
+class _CityPalette(TypedDict):
+    roofs: list[str]
+    face_l: str
+    face_r: str
+    win_on: str
+    win_side: str
+    win_off: str
+    lot_fill: str
+    lot_stroke: str
+    moon: str
+
+
+_CITY_PALETTES: dict[str, _CityPalette] = {
+    "dark": {
+        "roofs": ["#0c2d6b", "#1554c0", "#2f81f7", "#1fd5ff"],
+        "face_l": "#1a2440",
+        "face_r": "#111831",
+        "win_on": "#7df9ff",
+        "win_side": "#4cc9f0",
+        "win_off": "#111827",
+        "lot_fill": "#161b22",
+        "lot_stroke": "#0d1117",
+        "moon": "#e6edf3",
+    },
+    "light": {
+        "roofs": ["#bae6fd", "#7dd3fc", "#0284c7", "#0369a1"],
+        "face_l": "#cbd5e1",
+        "face_r": "#94a3b8",
+        "win_on": "#fef08a",
+        "win_side": "#fde047",
+        "win_off": "#64748b",
+        "lot_fill": "#e2e8f0",
+        "lot_stroke": "#cbd5e1",
+        "moon": "#f59e0b",
+    },
+}
 
 
 def _p(x: float, y: float) -> str:
@@ -43,6 +80,8 @@ def _levels(counts: list[int]) -> list[int]:
 def build_city(calendar: list[list], updated: str, theme: Theme) -> str:
     """Render the ~/contribution-city isometric skyline slice."""
     x0, fl, fr = theme.text_x, theme.frame_left, theme.frame_right
+    pal = _CITY_PALETTES[theme.variant]
+    roofs = pal["roofs"]
     days = [(datetime.date.fromisoformat(d), n) for d, n in calendar]
     counts = [n for _, n in days]
     total, peak = sum(counts), max(counts) if counts else 0
@@ -64,16 +103,16 @@ def build_city(calendar: list[list], updated: str, theme: Theme) -> str:
         T, B = (cx, cy - CITY_TH / 2), (cx, cy + CITY_TH / 2)
         if n == 0:
             shapes.append(
-                f'<path d="M{_p(*T)}L{_p(*R)}L{_p(*B)}L{_p(*L)}Z" fill="#161b22" stroke="#0d1117" stroke-width=".6"/>'
+                f'<path d="M{_p(*T)}L{_p(*R)}L{_p(*B)}L{_p(*L)}Z" fill="{pal["lot_fill"]}" stroke="{pal["lot_stroke"]}" stroke-width=".6"/>'
             )
             continue
         h = 8 + (CITY_HMAX - 8) * math.sqrt(n / peak)
         level = sum(n > t for t in lv)
         Tu, Ru, Bu, Lu = [(px, py - h) for px, py in (T, R, B, L)]
         shapes.append(
-            f'<path d="M{_p(*L)}L{_p(*B)}L{_p(*Bu)}L{_p(*Lu)}Z" fill="#1a2440"/>'
-            f'<path d="M{_p(*B)}L{_p(*R)}L{_p(*Ru)}L{_p(*Bu)}Z" fill="#111831"/>'
-            f'<path d="M{_p(*Tu)}L{_p(*Ru)}L{_p(*Bu)}L{_p(*Lu)}Z" fill="{ROOFS[level]}"/>'
+            f'<path d="M{_p(*L)}L{_p(*B)}L{_p(*Bu)}L{_p(*Lu)}Z" fill="{pal["face_l"]}"/>'
+            f'<path d="M{_p(*B)}L{_p(*R)}L{_p(*Ru)}L{_p(*Bu)}Z" fill="{pal["face_r"]}"/>'
+            f'<path d="M{_p(*Tu)}L{_p(*Ru)}L{_p(*Bu)}L{_p(*Lu)}Z" fill="{roofs[level]}"/>'
         )
         on, side, off, fl_wins = [], [], [], []
         for face, (a, b) in (("l", (L, B)), ("r", (B, R))):
@@ -95,14 +134,14 @@ def build_city(calendar: list[list], updated: str, theme: Theme) -> str:
                     else:
                         (on if face == "l" else side).append(seg)
         if off:
-            shapes.append(f'<path d="{"".join(off)}" fill="{WIN_OFF}"/>')
+            shapes.append(f'<path d="{"".join(off)}" fill="{pal["win_off"]}"/>')
         if on:
-            shapes.append(f'<path d="{"".join(on)}" fill="{WIN_ON}"/>')
+            shapes.append(f'<path d="{"".join(on)}" fill="{pal["win_on"]}"/>')
         if side:
-            shapes.append(f'<path d="{"".join(side)}" fill="{WIN_ON_SIDE}"/>')
+            shapes.append(f'<path d="{"".join(side)}" fill="{pal["win_side"]}"/>')
         for seg, face in fl_wins:
             flick += 1
-            shapes.append(f'<path class="f{flick % 3}" d="{seg}" fill="{WIN_ON if face == "l" else WIN_ON_SIDE}"/>')
+            shapes.append(f'<path class="f{flick % 3}" d="{seg}" fill="{pal["win_on"] if face == "l" else pal["win_side"]}"/>')
 
     # night sky in the empty top-right corner: stars, moon, a plane crossing
     stars = []
@@ -133,17 +172,19 @@ def build_city(calendar: list[list], updated: str, theme: Theme) -> str:
     )
     legend = "".join(
         f'<rect x="{x0 + 52 + i * 16}" y="{642}" width="11" height="11" fill="{c}"/>'
-        for i, c in enumerate(["#161b22"] + ROOFS)
+        for i, c in enumerate([pal["lot_fill"]] + roofs)
     )
+    sec_title = theme.section_label("centerpiece", "contribution-city")
+    moon_cut = "" if theme.is_light else f'<circle cx="{fr - 74}" cy="{155}" r="12.5" fill="{theme.bg}"/>'
     body = (
-        heading(44, "contribution-city", "// 03", theme)
+        heading(44, sec_title, "// 03", theme)
         + f'''
-<g class="ln" style="animation-delay:.15s"><text x="{x0}" y="96" class="dim"><tspan class="gr">$</tspan> render-city --last 365d <tspan fill="#484f58"># one building per day</tspan></text></g>
+<g class="ln" style="animation-delay:.15s"><text x="{x0}" y="96" class="dim"><tspan class="gr">$</tspan> render-city --last 365d <tspan fill="{theme.muted}"># one building per day</tspan></text></g>
 <g>{"".join(stars)}</g>
 <circle cx="{fr - 80}" cy="{160}" r="40" fill="url(#moonglow)"/>
-<circle cx="{fr - 80}" cy="{160}" r="14" fill="#e6edf3"/>
-<circle cx="{fr - 74}" cy="{155}" r="12.5" fill="#03040a"/>
-<g class="plane"><g transform="translate(0 132)"><rect x="0" y="0" width="14" height="2" rx="1" fill="#484f58"/><circle class="bl" cx="0" cy="1" r="1.6" fill="#ff7b72"/><circle class="bl" cx="14" cy="1" r="1.6" fill="#f0f6fc" style="animation-delay:.7s"/></g></g>
+<circle cx="{fr - 80}" cy="{160}" r="14" fill="{pal["moon"]}"/>
+{moon_cut}
+<g class="plane"><g transform="translate(0 132)"><rect x="0" y="0" width="14" height="2" rx="1" fill="{theme.muted}"/><circle class="bl" cx="0" cy="1" r="1.6" fill="#ff7b72"/><circle class="bl" cx="14" cy="1" r="1.6" fill="#f0f6fc" style="animation-delay:.7s"/></g></g>
 {info_svg}
 {"".join(shapes)}
 <text x="{x0}" y="{652}" class="dim" style="font-size:11px">quiet</text>{legend}<text x="{x0 + 52 + 5 * 16 + 6}" y="{652}" class="dim" style="font-size:11px">skyscraper</text>'''

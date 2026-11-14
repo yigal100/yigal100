@@ -3,7 +3,7 @@ name = ""               # leave empty to use strategy, or pin: "astrometrics" | 
 mode = "adaptive"       # "dark" | "light" | "adaptive"
 strategy = "rotate"     # "fixed" | "rotate" | "random"
 pool = ["astrometrics", "arcane-architect", "studio", "cyberpunk"]
-scifi_labels = true     # true for SECTOR / TELEMETRY / MISSIONS / LOADOUT labels
+themed_labels = true    # true for theme-specific section names (e.g. telemetry/missions, uplinks/night-city, quests/tomes)
 
 [profile]
 github_user = "yigal100"

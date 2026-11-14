@@ -10,8 +10,8 @@ BUBBLE = "M1.5 1.5h13v9h-7l-3.5 3v-3h-2.5z"
 
 def build_writing_head(theme: Theme) -> str:
     """Render the ~/writing section header."""
+    sec_title = theme.section_label("writing")
     if theme.is_modern:
-        sec_title = theme.section_label("writing", "subspace-log")
         sub = "recent transmissions & insights" if theme.scifi_labels else "recommended reading & insights"
         body = (
             heading(44, sec_title, "// 06", theme)
@@ -27,16 +27,16 @@ def build_writing_head(theme: Theme) -> str:
             theme=theme,
         )
     body = (
-        heading(44, "writing", "// 06", theme)
+        heading(44, sec_title, "// 06", theme)
         + f'''
-<g class="ln" style="animation-delay:.15s"><text x="{theme.text_x}" y="96" class="dim"><tspan class="gr">$</tspan> tail -n 5 ~/reading/insights.log <tspan fill="#484f58"># highlights</tspan></text></g>'''
+<g class="ln" style="animation-delay:.15s"><text x="{theme.text_x}" y="96" class="dim"><tspan class="gr">$</tspan> tail -n 5 ~/reading/insights.log <tspan fill="{theme.muted}"># highlights</tspan></text></g>'''
     )
     return slice_svg(
         120,
         body,
         title="Writing & Insights",
         desc="Articles and reading list",
-        text="~/writing// 06$ tail -n 5 ~/reading/insights.log # highlights",
+        text=f"~/{sec_title}// 06$ tail -n 5 ~/reading/insights.log # highlights",
         theme=theme,
     )
 

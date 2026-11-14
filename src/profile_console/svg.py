@@ -124,6 +124,138 @@ _PALETTES: dict[tuple[str, str], _Palette] = {
         "amber": "#b45309",
         "violet": "#7e22ce",
     },
+    ("cyberpunk", "dark"): {
+        "bg": "#03040a",
+        "surface": "#090d16",
+        "surface_alt": "#11161d",
+        "border": "#1e293b",
+        "fg": "#c9d1d9",
+        "wh": "#f0fbff",
+        "dim": "#8b949e",
+        "muted": "#484f58",
+        "cyan": "#00d9ff",
+        "magenta": "#ff2bd6",
+        "green": "#3fb950",
+        "amber": "#e3b341",
+        "violet": "#bc8cff",
+    },
+    ("cyberpunk", "light"): {
+        "bg": "#f4f6f9",
+        "surface": "#ffffff",
+        "surface_alt": "#e6ebf2",
+        "border": "#cbd5e1",
+        "fg": "#1f2328",
+        "wh": "#0b1220",
+        "dim": "#57606a",
+        "muted": "#8c959f",
+        "cyan": "#0077b6",
+        "magenta": "#c026d3",
+        "green": "#15803d",
+        "amber": "#b45309",
+        "violet": "#6d28d9",
+    },
+}
+
+
+class _ThemeSpec(TypedDict):
+    card_rx: int
+    grid_style: str
+    frame_style: str
+    heading_style: str
+    use_glow: bool
+    centerpiece_stem: str
+    centerpiece_alt: str
+    kicker: str
+    footer_status: str
+    footer_tag: str
+    labels: dict[str, str]
+
+
+_THEME_SPECS: dict[str, _ThemeSpec] = {
+    "astrometrics": {
+        "card_rx": 10,
+        "grid_style": "dot",
+        "frame_style": "reticles",
+        "heading_style": "capsule",
+        "use_glow": True,
+        "centerpiece_stem": "orbital-chart",
+        "centerpiece_alt": "Orbital contribution chart: a 3D-perspective star chart of the last 365 days.",
+        "kicker": "OBSERVATORY // IDENTITY LOG",
+        "footer_status": "ORBIT NOMINAL · CONTINUOUS EXPLORATION",
+        "footer_tag": "BOLDLY ARCHITECTING",
+        "labels": {
+            "links": "subspace-relays",
+            "stats": "telemetry",
+            "centerpiece": "astrometrics",
+            "projects": "missions",
+            "stack": "loadout",
+            "writing": "subspace-log",
+            "reading": "curated-feed",
+        },
+    },
+    "arcane-architect": {
+        "card_rx": 6,
+        "grid_style": "blueprint",
+        "frame_style": "diamonds",
+        "heading_style": "diamond",
+        "use_glow": True,
+        "centerpiece_stem": "contribution-terrain",
+        "centerpiece_alt": "Contribution terrain: layered mountain ridgelines of the last 365 days.",
+        "kicker": "CHARACTER SHEET // ARCHITECT",
+        "footer_status": "PROFICIENCY: SYSTEMS & CLOUD",
+        "footer_tag": "CHAOTIC GOOD",
+        "labels": {
+            "links": "portals",
+            "stats": "attributes",
+            "centerpiece": "terrain",
+            "projects": "quests",
+            "stack": "proficiencies",
+            "writing": "chronicles",
+            "reading": "tomes",
+        },
+    },
+    "studio": {
+        "card_rx": 2,
+        "grid_style": "none",
+        "frame_style": "clean",
+        "heading_style": "block",
+        "use_glow": False,
+        "centerpiece_stem": "signal-spectrum",
+        "centerpiece_alt": "Contribution spectrum: 52-week signal bars of the last 365 days.",
+        "kicker": "00 // STUDIO SPEC SHEET",
+        "footer_status": "CHAOTIC GOOD · BUILD & SHIP",
+        "footer_tag": "CHAOTIC GOOD STUDIO",
+        "labels": {
+            "links": "channels",
+            "stats": "metrics",
+            "centerpiece": "spectrum",
+            "projects": "works",
+            "stack": "index",
+            "writing": "journal",
+            "reading": "bookmarks",
+        },
+    },
+    "cyberpunk": {
+        "card_rx": 0,
+        "grid_style": "square",
+        "frame_style": "brackets",
+        "heading_style": "terminal",
+        "use_glow": True,
+        "centerpiece_stem": "contribution-city",
+        "centerpiece_alt": "Contribution city: an isometric skyline with one building per day of the last year.",
+        "kicker": "SYS://TERMINAL",
+        "footer_status": "CONNECTION ACTIVE",
+        "footer_tag": "// EOF",
+        "labels": {
+            "links": "uplinks",
+            "stats": "sys-metrics",
+            "centerpiece": "night-city",
+            "projects": "deployments",
+            "stack": "loadout",
+            "writing": "dev-log",
+            "reading": "intel-feed",
+        },
+    },
 }
 
 
@@ -163,13 +295,6 @@ class Theme:
     ) -> Theme:
         """Build a Theme from a named preset and light/dark variant."""
         resolved_fonts = fonts_dir or (PACKAGE_DIR / "fonts")
-        if preset == "cyberpunk":
-            return cls(
-                preset="cyberpunk",
-                variant="dark",
-                scifi_labels=scifi_labels,
-                fonts_dir=resolved_fonts,
-            )
         palette = _PALETTES.get((preset, variant))
         if palette is None:
             raise ValueError(f"Unknown theme preset/variant: {preset!r} / {variant!r}")
@@ -180,6 +305,10 @@ class Theme:
             fonts_dir=resolved_fonts,
             **palette,
         )
+
+    @property
+    def spec(self) -> _ThemeSpec:
+        return _THEME_SPECS[self.preset]
 
     @property
     def is_astrometrics(self) -> bool:
@@ -194,27 +323,28 @@ class Theme:
         return self.preset == "studio"
 
     @property
+    def is_cyberpunk(self) -> bool:
+        return self.preset == "cyberpunk"
+
+    @property
     def is_modern(self) -> bool:
-        """True for all non-cyberpunk adaptive themes."""
+        """True for all non-cyberpunk themes."""
         return self.preset != "cyberpunk"
 
     @property
     def card_rx(self) -> int:
-        if self.is_astrometrics:
-            return 10
-        if self.is_arcane:
-            return 6
-        if self.is_studio:
-            return 2
-        return 0
+        return self.spec["card_rx"]
 
     @property
     def is_light(self) -> bool:
         return self.variant == "light"
 
-    def section_label(self, standard: str, scifi: str) -> str:
-        """Return opt-in sci-fi section label when enabled, otherwise standard label."""
-        return scifi if self.scifi_labels else standard
+    def section_label(self, key: str, default: str | None = None) -> str:
+        """Return the theme's custom section label when themed labels are enabled, else default."""
+        fallback = default if default is not None else key
+        if not self.scifi_labels:
+            return fallback
+        return self.spec["labels"].get(key, fallback)
 
     @property
     def frame_left(self) -> int:
@@ -252,38 +382,52 @@ class Theme:
             ".dot{animation:pulse 2s ease-in-out infinite}"
         )
 
-    @property
-    def base_defs(self) -> str:
-        if self.is_studio:
+    def grid_pattern(self, x_offset: int = 0) -> str:
+        """Build the SVG <pattern id='grid'> element for this theme."""
+        x_attr = f' x="{x_offset}"' if x_offset else ""
+        gs = self.spec["grid_style"]
+        if gs == "none":
+            return f'<pattern id="grid"{x_attr} width="40" height="40" patternUnits="userSpaceOnUse"></pattern>'
+        if gs == "blueprint":
+            op = ".07" if self.is_light else ".05"
             return (
-                '<pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"></pattern>\n'
-                '<filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2"/></filter>\n'
-                '<filter id="g" x="-20%" y="-60%" width="140%" height="220%"><feGaussianBlur stdDeviation="1"/></filter>'
+                f'<pattern id="grid"{x_attr} width="40" height="40" patternUnits="userSpaceOnUse">'
+                f'<path d="M40 0H0V40" fill="none" stroke="{self.amber}" stroke-opacity="{op}"/>'
+                f'<path d="M20 0V40M0 20H40" fill="none" stroke="{self.amber}" stroke-opacity=".025"/></pattern>'
             )
-        if self.is_arcane:
-            grid_op = ".07" if self.is_light else ".05"
-            return (
-                f'<pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">'
-                f'<path d="M40 0H0V40" fill="none" stroke="{self.amber}" stroke-opacity="{grid_op}"/>'
-                f'<path d="M20 0V40M0 20H40" fill="none" stroke="{self.amber}" stroke-opacity=".025"/></pattern>\n'
-                '<filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="4"/></filter>\n'
-                '<filter id="g" x="-20%" y="-60%" width="140%" height="220%"><feGaussianBlur stdDeviation="2"/></filter>'
-            )
-        if self.is_astrometrics:
+        if gs == "dot":
             dot_op = ".12" if self.is_light else ".14"
             grid_op = ".06" if self.is_light else ".045"
             return (
-                f'<pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">'
+                f'<pattern id="grid"{x_attr} width="40" height="40" patternUnits="userSpaceOnUse">'
                 f'<path d="M40 0H0V40" fill="none" stroke="{self.cyan}" stroke-opacity="{grid_op}"/>'
-                f'<circle cx="0" cy="0" r="1" fill="{self.cyan}" fill-opacity="{dot_op}"/></pattern>\n'
-                '<filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="4"/></filter>\n'
-                '<filter id="g" x="-20%" y="-60%" width="140%" height="220%"><feGaussianBlur stdDeviation="2.5"/></filter>'
+                f'<circle cx="0" cy="0" r="1" fill="{self.cyan}" fill-opacity="{dot_op}"/></pattern>'
             )
+        op = ".08" if self.is_light else ".06"
         return (
-            f'<pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">'
-            f'<path d="M40 0H0V40" fill="none" stroke="{self.cyan}" stroke-opacity=".06"/></pattern>\n'
-            '<filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="6"/></filter>\n'
-            '<filter id="g" x="-20%" y="-60%" width="140%" height="220%"><feGaussianBlur stdDeviation="4"/></filter>'
+            f'<pattern id="grid"{x_attr} width="40" height="40" patternUnits="userSpaceOnUse">'
+            f'<path d="M40 0H0V40" fill="none" stroke="{self.cyan}" stroke-opacity="{op}"/></pattern>'
+        )
+
+    def rail_style(self) -> tuple[str, str, bool]:
+        """Return (rail_color, rail_opacity, show_glow) for slice borders."""
+        fs = self.spec["frame_style"]
+        if self.is_light or fs == "clean":
+            return (self.cyan if fs == "brackets" else self.border), "1", False
+        if fs == "diamonds":
+            return self.amber, ".45", self.spec["use_glow"]
+        if fs == "reticles":
+            return self.cyan, ".45", self.spec["use_glow"]
+        return self.cyan, "1", self.spec["use_glow"]
+
+    @property
+    def base_defs(self) -> str:
+        glow_std = "6" if self.spec["frame_style"] == "brackets" else "4"
+        g_std = "4" if self.spec["frame_style"] == "brackets" else "2"
+        return (
+            f"{self.grid_pattern()}\n"
+            f'<filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="{glow_std}"/></filter>\n'
+            f'<filter id="g" x="-20%" y="-60%" width="140%" height="220%"><feGaussianBlur stdDeviation="{g_std}"/></filter>'
         )
 
 
@@ -361,47 +505,49 @@ def slice_svg(
         + (f"M{fl} {y0}H{fr}" if top else "")
         + (f"M{fl} {y1}H{fr}" if bottom else "")
     )
+    fs = theme.spec["frame_style"]
+    rail_color, rail_op, show_glow = theme.rail_style()
     corners = ""
-    if theme.is_modern:
-        if theme.is_astrometrics:
-            if top:
-                corners += (
-                    f'<circle cx="{fl}" cy="{y0}" r="3.5" fill="{theme.amber}"/>'
-                    f'<circle cx="{fr}" cy="{y0}" r="3.5" fill="{theme.cyan}"/>'
-                    f'<path d="M{fl + 8} {y0 - 4}H{fl + 24}M{fr - 24} {y0 - 4}H{fr - 8}" stroke="{theme.dim}" stroke-width="1"/>'
-                )
-            if bottom:
-                corners += (
-                    f'<circle cx="{fl}" cy="{y1}" r="3.5" fill="{theme.cyan}"/>'
-                    f'<circle cx="{fr}" cy="{y1}" r="3.5" fill="{theme.amber}"/>'
-                )
-        elif theme.is_arcane:
-            def _diamond(cx: float, cy: float, col: str) -> str:
-                return f'<path d="M{cx} {cy - 5}L{cx + 5} {cy}L{cx} {cy + 5}L{cx - 5} {cy}Z" fill="{col}"/>'
-
-            if top:
-                corners += _diamond(fl, y0, theme.amber) + _diamond(fr, y0, theme.amber)
-            if bottom:
-                corners += _diamond(fl, y1, theme.amber) + _diamond(fr, y1, theme.amber)
-        rail_color = theme.border if (theme.is_light or theme.is_studio) else (theme.amber if theme.is_arcane else theme.cyan)
-        rail_op = "1" if (theme.is_light or theme.is_studio) else ".45"
-        glow_markup = (
-            ""
-            if theme.is_light or theme.is_studio
-            else f'<path d="{glow}" fill="none" stroke="{rail_color}" stroke-width="2" opacity=".2" filter="url(#glow)"/>\n'
-        )
-        rail_markup = f'<path d="{rails}" fill="none" stroke="{rail_color}" stroke-opacity="{rail_op}" stroke-width="1.2"/>\n<g>{corners}</g>'
-    else:
+    if fs == "reticles":
         if top:
             corners += (
-                f'<path d="M{fl - 7} {y0 + 18}V{y0 - 7}H{fl + 18}"/><path d="M{fr - 18} {y0 - 7}H{fr + 7}V{y0 + 18}"/>'
+                f'<circle cx="{fl}" cy="{y0}" r="3.5" fill="{theme.amber}"/>'
+                f'<circle cx="{fr}" cy="{y0}" r="3.5" fill="{theme.cyan}"/>'
+                f'<path d="M{fl + 8} {y0 - 4}H{fl + 24}M{fr - 24} {y0 - 4}H{fr - 8}" stroke="{theme.dim}" stroke-width="1"/>'
             )
         if bottom:
             corners += (
+                f'<circle cx="{fl}" cy="{y1}" r="3.5" fill="{theme.cyan}"/>'
+                f'<circle cx="{fr}" cy="{y1}" r="3.5" fill="{theme.amber}"/>'
+            )
+    elif fs == "diamonds":
+        def _diamond(cx: float, cy: float, col: str) -> str:
+            return f'<path d="M{cx} {cy - 5}L{cx + 5} {cy}L{cx} {cy + 5}L{cx - 5} {cy}Z" fill="{col}"/>'
+
+        if top:
+            corners += _diamond(fl, y0, theme.amber) + _diamond(fr, y0, theme.amber)
+        if bottom:
+            corners += _diamond(fl, y1, theme.amber) + _diamond(fr, y1, theme.amber)
+    elif fs == "brackets":
+        bracket_parts = ""
+        if top:
+            bracket_parts += (
+                f'<path d="M{fl - 7} {y0 + 18}V{y0 - 7}H{fl + 18}"/><path d="M{fr - 18} {y0 - 7}H{fr + 7}V{y0 + 18}"/>'
+            )
+        if bottom:
+            bracket_parts += (
                 f'<path d="M{fl - 7} {y1 - 18}V{y1 + 7}H{fl + 18}"/><path d="M{fr - 18} {y1 + 7}H{fr + 7}V{y1 - 18}"/>'
             )
-        glow_markup = f'<path d="{glow}" fill="none" stroke="{theme.cyan}" stroke-width="3" opacity=".55" filter="url(#glow)"/>\n'
-        rail_markup = f'<path d="{rails}" fill="none" stroke="{theme.cyan}" stroke-width="1.2"/>\n<g fill="none" stroke="{theme.cyan}" stroke-width="2">{corners}</g>'
+        corners = f'<g fill="none" stroke="{rail_color}" stroke-width="2">{bracket_parts}</g>'
+
+    glow_w, glow_op = ("3", ".55") if fs == "brackets" else ("2", ".2")
+    glow_markup = (
+        f'<path d="{glow}" fill="none" stroke="{rail_color}" stroke-width="{glow_w}" opacity="{glow_op}" filter="url(#glow)"/>\n'
+        if show_glow
+        else ""
+    )
+    corner_wrap = corners if fs == "brackets" else f"<g>{corners}</g>"
+    rail_markup = f'<path d="{rails}" fill="none" stroke="{rail_color}" stroke-opacity="{rail_op}" stroke-width="1.2"/>\n{corner_wrap}'
     return f'''<svg xmlns="http://www.w3.org/2000/svg" width="{w}" height="{h}" viewBox="0 0 {w} {h}" role="img" aria-labelledby="t d">
 <title id="t">{esc(title)}</title>
 <desc id="d">{esc(desc)}</desc>
@@ -439,18 +585,14 @@ def half_slice(
     hw, m, fl = theme.half_width, theme.margin, theme.frame_left
     rx = fl if side == "L" else hw - m
     bx0, bx1 = (fl, hw) if side == "L" else (0, hw - m)
-    if theme.is_modern:
-        rail_color = theme.border if (theme.is_light or theme.is_studio) else (theme.amber if theme.is_arcane else theme.cyan)
-        rail_op = "1" if (theme.is_light or theme.is_studio) else ".45"
-        glow_markup = (
-            ""
-            if theme.is_light or theme.is_studio
-            else f'<path d="M{rx} -40V{h + 40}" fill="none" stroke="{rail_color}" stroke-width="2" opacity=".2" filter="url(#glow)"/>\n'
-        )
-        rail_markup = f'<path d="M{rx} 0V{h}" fill="none" stroke="{rail_color}" stroke-opacity="{rail_op}" stroke-width="1.2"/>'
-    else:
-        glow_markup = f'<path d="M{rx} -40V{h + 40}" fill="none" stroke="{theme.cyan}" stroke-width="3" opacity=".55" filter="url(#glow)"/>\n'
-        rail_markup = f'<path d="M{rx} 0V{h}" fill="none" stroke="{theme.cyan}" stroke-width="1.2"/>'
+    rail_color, rail_op, show_glow = theme.rail_style()
+    glow_w, glow_op = ("3", ".55") if theme.spec["frame_style"] == "brackets" else ("2", ".2")
+    glow_markup = (
+        f'<path d="M{rx} -40V{h + 40}" fill="none" stroke="{rail_color}" stroke-width="{glow_w}" opacity="{glow_op}" filter="url(#glow)"/>\n'
+        if show_glow
+        else ""
+    )
+    rail_markup = f'<path d="M{rx} 0V{h}" fill="none" stroke="{rail_color}" stroke-opacity="{rail_op}" stroke-width="1.2"/>'
     return f'''<svg xmlns="http://www.w3.org/2000/svg" width="{hw}" height="{h}" viewBox="0 0 {hw} {h}" role="img" aria-labelledby="t d">
 <title id="t">{esc(title)}</title>
 <desc id="d">{esc(desc)}</desc>
@@ -473,8 +615,9 @@ def half_slice(
 def heading(y: int, name: str, counter: str, theme: Theme) -> str:
     """Render a section heading bar with counter."""
     x, fr, cyan = theme.text_x, theme.frame_right, theme.cyan
-    if theme.is_astrometrics:
-        idx = counter.replace("/", "").strip()
+    hs = theme.spec["heading_style"]
+    idx = counter.replace("/", "").strip()
+    if hs == "capsule":
         pill_w = 34
         return (
             f'<rect x="{x}" y="{y - 16}" width="{pill_w}" height="18" rx="9" fill="{theme.amber}" fill-opacity=".18" stroke="{theme.amber}" stroke-opacity=".7"/>'
@@ -484,8 +627,7 @@ def heading(y: int, name: str, counter: str, theme: Theme) -> str:
             f'<line x1="{x}" y1="{y + 14}" x2="{fr - 36}" y2="{y + 14}" stroke="{theme.border}" stroke-width="1"/>'
             f'<line x1="{x}" y1="{y + 14}" x2="{x + 110}" y2="{y + 14}" stroke="{cyan}" stroke-width="2.5" stroke-linecap="round"/>'
         )
-    if theme.is_arcane:
-        idx = counter.replace("/", "").strip()
+    if hs == "diamond":
         return (
             f'<path d="M{x + 6} {y - 13}L{x + 12} {y - 7}L{x + 6} {y - 1}L{x} {y - 7}Z" fill="{theme.amber}"/>'
             f'<text x="{x + 22}" y="{y}" font-weight="700" letter-spacing="1.6" class="wh" style="font-size:18px">{esc(name.upper())}</text>'
@@ -493,20 +635,19 @@ def heading(y: int, name: str, counter: str, theme: Theme) -> str:
             f'<line x1="{x}" y1="{y + 14}" x2="{fr - 36}" y2="{y + 14}" stroke="{theme.amber}" stroke-opacity=".35"/>'
             f'<line x1="{x}" y1="{y + 14}" x2="{x + 120}" y2="{y + 14}" stroke="{theme.amber}" stroke-width="2"/>'
         )
-    if theme.is_studio:
-        idx = counter.replace("/", "").strip()
+    if hs == "block":
         return (
             f'<rect x="{x}" y="{y - 17}" width="30" height="20" rx="2" fill="{cyan}"/>'
             f'<text x="{x + 15}" y="{y - 2}" text-anchor="middle" font-weight="700" fill="{theme.bg}" style="font-size:11.5px">{esc(idx)}</text>'
             f'<text x="{x + 42}" y="{y}" font-weight="800" letter-spacing="1.5" class="wh" style="font-size:18px">{esc(name.upper())}</text>'
             f'<line x1="{x}" y1="{y + 14}" x2="{fr - 36}" y2="{y + 14}" stroke="{theme.border}" stroke-width="1.5"/>'
         )
-    return f'''<text x="{x}" y="{y}" font-weight="700" fill="{cyan}" filter="url(#g)" opacity=".8" style="font-size:20px">~/</text>
-<text x="{x}" y="{y}" font-weight="700" style="font-size:20px"><tspan class="cy">~/</tspan><tspan class="wh">{esc(name)}</tspan></text>
-<text x="{fr - 36}" y="{y}" text-anchor="end" letter-spacing="2" fill="#6e7681" style="font-size:12px">{esc(counter)}</text>
+    glow_t = "" if theme.is_light else f'<text x="{x}" y="{y}" font-weight="700" fill="{cyan}" filter="url(#g)" opacity=".8" style="font-size:20px">~/</text>\n'
+    glow_l = "" if theme.is_light else f'\n<line x1="{x}" y1="{y + 14}" x2="{x + 120}" y2="{y + 14}" stroke="{cyan}" stroke-width="3" filter="url(#g)"/>'
+    return f'''{glow_t}<text x="{x}" y="{y}" font-weight="700" style="font-size:20px"><tspan class="cy">~/</tspan><tspan class="wh">{esc(name)}</tspan></text>
+<text x="{fr - 36}" y="{y}" text-anchor="end" letter-spacing="2" fill="{theme.dim}" style="font-size:12px">{esc(counter)}</text>
 <line x1="{x}" y1="{y + 14}" x2="{fr - 36}" y2="{y + 14}" stroke="{cyan}" stroke-opacity=".4"/>
-<line x1="{x}" y1="{y + 14}" x2="{x + 120}" y2="{y + 14}" stroke="{cyan}" stroke-width="2"/>
-<line x1="{x}" y1="{y + 14}" x2="{x + 120}" y2="{y + 14}" stroke="{cyan}" stroke-width="3" filter="url(#g)"/>'''
+<line x1="{x}" y1="{y + 14}" x2="{x + 120}" y2="{y + 14}" stroke="{cyan}" stroke-width="2"/>{glow_l}'''
 
 
 def stagger(rows: list[str | None], y0: int, lh: int, delay0: float = 0.15, step: float = 0.12) -> tuple[str, int]:

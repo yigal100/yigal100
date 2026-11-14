@@ -36,7 +36,7 @@ def _tile(
 </g>'''
     glow = (
         ""
-        if pending
+        if pending or theme.is_light
         else f'<text x="{x + 16}" y="{y + 50}" font-weight="700" fill="{cyan}" '
         f'filter="url(#g)" opacity=".55" style="font-size:30px">{esc(value)}</text>'
     )
@@ -45,7 +45,7 @@ def _tile(
 <path d="M{x} {y + 12}V{y}H{x + 12}" fill="none" stroke="{cyan}" stroke-width="2"/>
 <text x="{x + 16}" y="{y + 22}" letter-spacing="1.5" class="dim" style="font-size:10.5px">{esc(label)}</text>
 {glow}<text x="{x + 16}" y="{y + 50}" font-weight="700" fill="{vc}" style="font-size:30px">{esc(value)}</text>
-<text x="{x + 16}" y="{y + h - 12}" fill="#6e7681" style="font-size:12px">{esc(sub)}</text>
+<text x="{x + 16}" y="{y + h - 12}" fill="{theme.dim}" style="font-size:12px">{esc(sub)}</text>
 </g>'''
 
 
@@ -55,8 +55,8 @@ def build_stats(d: dict, profile: ProfileInfo, theme: Theme) -> str:
     y = datetime.date.fromisoformat(d["updated"])
     since = datetime.date.fromisoformat(d["created_at"][:10])
     yrs = (y - since).days // 365
+    sec_title = theme.section_label("stats")
     if theme.is_modern:
-        sec_title = theme.section_label("stats", "telemetry")
         sub_cmd = f"sensor array · {profile.handle}" if theme.scifi_labels else f"github telemetry · {profile.handle}"
         parts = [
             heading(44, sec_title, "// 02", theme),
@@ -65,7 +65,7 @@ def build_stats(d: dict, profile: ProfileInfo, theme: Theme) -> str:
         ]
     else:
         parts = [
-            heading(44, "stats", "// 02", theme),
+            heading(44, sec_title, "// 02", theme),
             f'<g class="ln" style="animation-delay:.15s"><text x="{x}" y="96" class="dim">'
             f'<tspan class="gr">$</tspan> gh stats --user {esc(profile.handle)}</text></g>',
         ]
@@ -136,7 +136,7 @@ def build_stats(d: dict, profile: ProfileInfo, theme: Theme) -> str:
     for (_, p), c in zip(items, cols):
         w = bw * p
         segs.append(f'<rect x="{cx:.1f}" y="{by}" width="{max(w - 2, 1):.1f}" height="8" rx="{"3" if theme.is_modern else "0"}" fill="{c}"/>')
-        if not theme.is_modern:
+        if not theme.is_modern and not theme.is_light:
             segs.append(
                 f'<rect x="{cx:.1f}" y="{by}" width="{max(w - 2, 1):.1f}" height="8" fill="{c}" filter="url(#g)" opacity=".6"/>'
             )
@@ -165,7 +165,7 @@ def build_stats(d: dict, profile: ProfileInfo, theme: Theme) -> str:
 <rect x="{lx}" y="{ry}" width="{lwid}" height="{rh}" fill="{cyan}" fill-opacity=".035" stroke="{cyan}" stroke-opacity=".35"/>
 <path d="M{lx} {ry + 12}V{ry}H{lx + 12}" fill="none" stroke="{cyan}" stroke-width="2"/>
 <text x="{lx + 16}" y="{ry + 24}" letter-spacing="1.5" class="dim" style="font-size:10.5px">TOP LANGUAGES</text>
-<rect x="{bx}" y="{by}" width="{bw}" height="8" fill="#11161d"/>
+<rect x="{bx}" y="{by}" width="{bw}" height="8" fill="{theme.surface_alt}"/>
 {"".join(segs)}
 {"".join(legend)}
 </g>''')

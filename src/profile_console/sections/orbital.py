@@ -195,7 +195,7 @@ def build_orbital(calendar: list[list], updated: str, theme: Theme) -> str:
         f'<text x="{rx_card + 52 + 4 * 22}" y="{ly_leg + 4}" class="dim" style="font-size:10.5px">supernova</text>'
     )
 
-    sec_title = theme.section_label("orbital-activity", "astrometrics")
+    sec_title = theme.section_label("centerpiece", "orbital-activity")
     sub_line = (
         "astrometrics · 3d orbital telemetry · last 365 days"
         if theme.scifi_labels

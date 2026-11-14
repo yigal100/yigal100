@@ -127,7 +127,7 @@ def render_svgs(
     cal_file = paths.data_dir / "calendar.json"
     calendar = json.loads(cal_file.read_text(encoding="utf-8")) if cal_file.exists() else None
 
-    if resolved_name != "cyberpunk" and resolved_mode == "adaptive":
+    if resolved_mode == "adaptive":
         for variant in ("dark", "light"):
             theme = Theme.from_preset(
                 resolved_name,
@@ -137,10 +137,9 @@ def render_svgs(
             )
             _render_variant(cfg, paths, stats, articles, icons, calendar, theme, suffix=f"-{variant}")
     else:
-        variant = "dark" if resolved_name == "cyberpunk" else resolved_mode
         theme = Theme.from_preset(
             resolved_name,
-            variant,
+            resolved_mode,
             scifi_labels=cfg.theme.scifi_labels,
             fonts_dir=paths.fonts_dir,
         )

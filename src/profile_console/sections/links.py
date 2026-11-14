@@ -29,8 +29,8 @@ def _icon_markup(key: str, x: float, y: int, icons: dict[str, str], cyan: str, b
 def build_links_head(profile: ProfileInfo, theme: Theme) -> str:
     """Render the ~/links section header."""
     x = theme.text_x
+    sec_title = theme.section_label("links")
     if theme.is_modern:
-        sec_title = theme.section_label("links", "subspace-relays")
         sub = f"active relays · {profile.handle}" if theme.scifi_labels else f"channels · {profile.handle}"
         body = (
             heading(44, sec_title, "// 01", theme)
@@ -46,7 +46,7 @@ def build_links_head(profile: ProfileInfo, theme: Theme) -> str:
             theme=theme,
         )
     body = (
-        heading(44, "links", "// 01", theme)
+        heading(44, sec_title, "// 01", theme)
         + f'''
 <g class="ln" style="animation-delay:.15s"><text x="{x}" y="96" class="dim"><tspan class="gr">$</tspan> ping {esc(profile.handle)} --all-channels</text></g>'''
     )
@@ -55,7 +55,7 @@ def build_links_head(profile: ProfileInfo, theme: Theme) -> str:
         body,
         title="Links",
         desc="Where to find me",
-        text=f"~/links// 01$ ping {profile.handle} --all-channels",
+        text=f"~/{sec_title}// 01$ ping {profile.handle} --all-channels",
         theme=theme,
     )
 
@@ -83,6 +83,20 @@ def build_link_button(
     text = link.label + link.handle + "in"
     icon_main = _icon_markup(link.icon, lx + 12, by + 11, icons, cyan, bg=theme.bg)
 
+    rail_color, rail_op, show_glow = theme.rail_style()
+    glow_w, glow_op = ("3", ".55") if theme.spec["frame_style"] == "brackets" else ("2", ".2")
+    glow_markup = (
+        f'<path d="{glow}" fill="none" stroke="{rail_color}" stroke-width="{glow_w}" opacity="{glow_op}" filter="url(#glow)"/>'
+        if show_glow and glow
+        else ""
+    )
+    rail_markup = (
+        f'<path d="{rails}" fill="none" stroke="{rail_color}" stroke-opacity="{rail_op}" stroke-width="1.2"/>'
+        if rails
+        else ""
+    )
+    grid_def = theme.grid_pattern((-x0) % 40)
+
     if theme.is_modern:
         conn_left = (
             f'<line x1="0" y1="{by + bh / 2}" x2="{lx:.1f}" y2="{by + bh / 2}" '
@@ -104,43 +118,17 @@ def build_link_button(
 <text x="{lx + 38:.1f}" y="{by + 25}" font-weight="700" class="wh" style="font-size:13px">{esc(link.label)}</text>
 <text x="{lx + 12:.1f}" y="{by + 46}" class="dim" style="font-size:10px">{esc(link.handle)}</text>
 </g>'''
-        rail_color = theme.border if (theme.is_light or theme.is_studio) else cyan
-        rail_op = "1" if (theme.is_light or theme.is_studio) else ".45"
-        glow_markup = (
-            ""
-            if theme.is_light or theme.is_studio or not glow
-            else f'<path d="{glow}" fill="none" stroke="{cyan}" stroke-width="2" opacity=".25" filter="url(#glow)"/>'
-        )
-        rail_markup = (
-            f'<path d="{rails}" fill="none" stroke="{rail_color}" stroke-opacity="{rail_op}" stroke-width="1.2"/>'
-            if rails
-            else ""
-        )
-        dot_op = ".12" if theme.is_light else ".14"
-        grid_op = ".06" if theme.is_light else ".045"
-        grid_def = (
-            f'<pattern id="grid" x="{(-x0) % 40}" width="40" height="40" patternUnits="userSpaceOnUse">'
-            f'<path d="M40 0H0V40" fill="none" stroke="{cyan}" stroke-opacity="{grid_op}"/>'
-            f'<circle cx="0" cy="0" r="1" fill="{cyan}" fill-opacity="{dot_op}"/></pattern>'
-        )
     else:
         box = f"M{lx:.1f} {by}H{lx + btn_w - cut:.1f}L{lx + btn_w:.1f} {by + cut}V{by + bh}H{lx:.1f}Z"
+        icon_glow = "" if theme.is_light else f'<g filter="url(#g)" opacity=".5">{icon_main}</g>\n'
         body = f'''<g class="ln" style="animation-delay:{0.25 + index * 0.08:.2f}s">
 <path d="{box}" fill="{cyan}" fill-opacity=".05"/>
 <path d="{box}" fill="none" stroke="{cyan}" stroke-opacity=".55"/>
 <path d="M{lx + btn_w - cut:.1f} {by}L{lx + btn_w:.1f} {by + cut}" stroke="{cyan}" stroke-width="2"/>
-<g filter="url(#g)" opacity=".5">{icon_main}</g>
-{icon_main}
+{icon_glow}{icon_main}
 <text x="{lx + 38:.1f}" y="{by + 25}" font-weight="700" class="cy" style="font-size:13px">{esc(link.label)}</text>
 <text x="{lx + 12:.1f}" y="{by + 46}" class="dim" style="font-size:10px">{esc(link.handle)}</text>
 </g>'''
-        glow_markup = (
-            f'<path d="{glow}" fill="none" stroke="{cyan}" stroke-width="3" opacity=".55" filter="url(#glow)"/>'
-            if glow
-            else ""
-        )
-        rail_markup = f'<path d="{rails}" fill="none" stroke="{cyan}" stroke-width="1.2"/>' if rails else ""
-        grid_def = f'<pattern id="grid" x="{(-x0) % 40}" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0H0V40" fill="none" stroke="{cyan}" stroke-opacity=".06"/></pattern>'
 
     return f'''<svg xmlns="http://www.w3.org/2000/svg" width="{seg}" height="{h}" viewBox="0 0 {seg} {h}" role="img" aria-labelledby="t d">
 <title id="t">{esc(link.label)}</title>

@@ -9,8 +9,8 @@ from profile_console.svg import Theme, esc, heading, slice_svg
 def build_reading_head(theme: Theme, section_num: int = 6) -> str:
     """Render the ~/reading section header."""
     num = f"// {section_num:02d}"
+    sec_title = theme.section_label("reading")
     if theme.is_modern:
-        sec_title = theme.section_label("reading", "curated-feed")
         sub = "recommended reading & transmissions" if theme.scifi_labels else "recommended reading & references"
         body = (
             heading(44, sec_title, num, theme)
@@ -26,16 +26,16 @@ def build_reading_head(theme: Theme, section_num: int = 6) -> str:
             theme=theme,
         )
     body = (
-        heading(44, "reading", num, theme)
+        heading(44, sec_title, num, theme)
         + f'''
-<g class="ln" style="animation-delay:.15s"><text x="{theme.text_x}" y="96" class="dim"><tspan class="gr">$</tspan> cat ~/reading/recommended.list <tspan fill="#484f58"># curated</tspan></text></g>'''
+<g class="ln" style="animation-delay:.15s"><text x="{theme.text_x}" y="96" class="dim"><tspan class="gr">$</tspan> cat ~/reading/recommended.list <tspan fill="{theme.muted}"># curated</tspan></text></g>'''
     )
     return slice_svg(
         120,
         body,
         title="Recommended Reading",
         desc="Recommended reading and references",
-        text=f"~/reading{num}$ cat ~/reading/recommended.list # curated",
+        text=f"~/{sec_title}{num}$ cat ~/reading/recommended.list # curated",
         theme=theme,
     )
 

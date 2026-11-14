@@ -81,8 +81,9 @@ def build_terrain(calendar: list[list], updated: str, theme: Theme) -> str:
         for i, (lab, val, sub, acc) in enumerate(cards)
     )
 
+    sec_title = theme.section_label("centerpiece", "contribution-terrain")
     body = (
-        heading(44, "contribution-terrain", "// 03", theme)
+        heading(44, sec_title, "// 03", theme)
         + f'''
 <g class="ln" style="animation-delay:.15s"><text x="{x0}" y="96" class="dim"><tspan class="am">◆</tspan> elevation map · 52 weekly ridges</text></g>
 <g>{"".join(ridges)}{"".join(beacons)}</g>
@@ -129,8 +130,9 @@ def build_spectrum(calendar: list[list], updated: str, theme: Theme) -> str:
         f'<tspan class="wh" font-weight="700">{active_days}</tspan> ACTIVE DAYS  ·  '
         f'PEAK <tspan class="cy" font-weight="700">{esc(busiest_str)}</tspan></text>'
     )
+    sec_title = theme.section_label("centerpiece", "signal-spectrum")
     body = (
-        heading(44, "signal-spectrum", "// 03", theme)
+        heading(44, sec_title, "// 03", theme)
         + f'''
 <g class="ln" style="animation-delay:.15s"><text x="{x0}" y="96" class="dim"><tspan class="cy">■</tspan> 52-week contribution cadence</text></g>
 <g>{"".join(bars)}</g>

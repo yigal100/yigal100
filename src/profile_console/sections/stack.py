@@ -10,8 +10,8 @@ def build_stack(stack: tuple[StackCategory, ...], theme: Theme) -> str:
     """Render the ~/stack section with dynamic category column width and pill wrapping."""
     x0, cyan = theme.text_x, theme.cyan
     max_x = theme.frame_right - 36
+    sec_title = theme.section_label("stack")
     if theme.is_modern:
-        sec_title = theme.section_label("stack", "loadout")
         sub = "systems & knowledge clusters" if theme.scifi_labels else "capabilities & tooling"
         parts = [
             heading(44, sec_title, "// 05", theme),
@@ -20,7 +20,7 @@ def build_stack(stack: tuple[StackCategory, ...], theme: Theme) -> str:
         ]
     else:
         parts = [
-            heading(44, "stack", "// 05", theme),
+            heading(44, sec_title, "// 05", theme),
             f'<g class="ln" style="animation-delay:.15s"><text x="{x0}" y="96" class="dim">'
             '<tspan class="gr">$</tspan> scan --loadout --top-level</text></g>',
         ]

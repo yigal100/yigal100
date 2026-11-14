@@ -131,25 +131,11 @@ def stats_alt(d: dict) -> str:
     return html.escape(text, quote=True)
 
 
-CENTERPIECE_STEMS = {
-    "astrometrics": "orbital-chart",
-    "arcane-architect": "contribution-terrain",
-    "studio": "signal-spectrum",
-    "cyberpunk": "contribution-city",
-}
-
-
-def city_alt(calendar: list[list], *, theme_name: str = "cyberpunk") -> str:
+def city_alt(calendar: list[list], *, theme: Theme) -> str:
     """Build accessible alt text summarizing the contribution visualization."""
     total = sum(n for _, n in calendar)
     busiest = max(calendar, key=lambda t: t[1]) if calendar else None
-    prefixes = {
-        "astrometrics": "Orbital contribution chart: a 3D-perspective star chart of the last 365 days.",
-        "arcane-architect": "Contribution terrain: layered mountain ridgelines of the last 365 days.",
-        "studio": "Contribution spectrum: 52-week signal bars of the last 365 days.",
-        "cyberpunk": "Contribution city: an isometric night skyline with one building per day of the last year.",
-    }
-    text = f"{prefixes.get(theme_name, prefixes['cyberpunk'])} {total:,} contributions"
+    text = f"{theme.spec['centerpiece_alt']} {total:,} contributions"
     if busiest and busiest[1]:
         d = datetime.date.fromisoformat(busiest[0])
         text += f", busiest day {d:%B} {d.day} with {busiest[1]}"
@@ -161,14 +147,12 @@ def _console_block(
     stats: dict,
     articles: list[dict],
     calendar: list[list] | None,
-    width: int,
+    theme: Theme,
     *,
-    theme_name: str,
     mode: str,
 ) -> str:
     """Build the complete <p align='center'>...</p> SVG console stack."""
-    adaptive = theme_name != "cyberpunk" and mode == "adaptive"
-    is_modern = theme_name != "cyberpunk"
+    adaptive = mode == "adaptive"
     header_alt = html.escape(f"{cfg.profile.header_title} — {cfg.profile.header_desc}", quote=True)
     stack_alt = html.escape(
         "Tech stack: " + ", ".join(c.category for c in cfg.stack) + ".",
@@ -181,12 +165,12 @@ def _console_block(
         '<p align="center">',
         _img_tag("header", "100%", header_alt, adaptive=adaptive),
         _img_tag("links", "100%", "Links", adaptive=adaptive),
-        links_block(cfg.links, width, adaptive=adaptive),
+        links_block(cfg.links, theme.width, adaptive=adaptive),
         _img_tag("stats", "100%", stats_alt(stats), adaptive=adaptive),
     ]
     if calendar is not None:
-        stem = CENTERPIECE_STEMS.get(theme_name, "contribution-city")
-        lines.append(_img_tag(stem, "100%", city_alt(calendar, theme_name=theme_name), adaptive=adaptive))
+        stem = theme.spec["centerpiece_stem"]
+        lines.append(_img_tag(stem, "100%", city_alt(calendar, theme=theme), adaptive=adaptive))
     lines.extend(
         [
             _img_tag("projects", "100%", "Projects", adaptive=adaptive),
@@ -211,7 +195,7 @@ def _console_block(
         )
     lines.extend(
         [
-            _img_tag("footer", "100%", "End of transmission." if is_modern else "Connection closed.", adaptive=adaptive),
+            _img_tag("footer", "100%", "End of transmission." if theme.is_modern else "Connection closed.", adaptive=adaptive),
             "</p>",
             "<!-- console:end -->",
         ]
@@ -273,7 +257,7 @@ def update_readme(
     s = _replace_block(
         s,
         "console",
-        _console_block(cfg, stats, articles, calendar, theme.width, theme_name=resolved_name, mode=resolved_mode),
+        _console_block(cfg, stats, articles, calendar, theme, mode=resolved_mode),
     )
 
     paths.readme_path.write_text(s, encoding="utf-8")
