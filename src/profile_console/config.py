@@ -130,6 +130,23 @@ class StackCategory:
 
 
 @dataclass(frozen=True)
+class ReadingItem:
+    """Recommended reading entry configured in profile.toml."""
+
+    title: str
+    url: str
+    source: str = ""
+
+    @classmethod
+    def from_dict(cls, raw: dict[str, str]) -> ReadingItem:
+        return cls(
+            title=raw["title"],
+            url=raw["url"],
+            source=raw.get("source", ""),
+        )
+
+
+@dataclass(frozen=True)
 class ThemeConfig:
     """Theme preset, color mode, and optional UI label style."""
 
@@ -163,6 +180,7 @@ class ProfileConfig:
     links: tuple[LinkItem, ...]
     projects: tuple[ProjectItem, ...]
     stack: tuple[StackCategory, ...]
+    reading: tuple[ReadingItem, ...] = ()
 
 
 def load_config(config_path: pathlib.Path | None = None) -> ProfileConfig:
@@ -192,4 +210,5 @@ def load_config(config_path: pathlib.Path | None = None) -> ProfileConfig:
         links=tuple(LinkItem.from_dict(item) for item in raw.get("links", [])),
         projects=tuple(ProjectItem.from_dict(item) for item in raw.get("projects", [])),
         stack=tuple(StackCategory.from_dict(item) for item in raw.get("stack", [])),
+        reading=tuple(ReadingItem.from_dict(item) for item in raw.get("reading", [])),
     )

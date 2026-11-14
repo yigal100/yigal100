@@ -38,12 +38,12 @@ url = "https://www.linkedin.com/in/yigal-chripun/"
 # handle = "@yigal100"
 # url = "https://x.com/yigal100"
 
-[[links]]
-icon = "devdotto"
-filename = "dev"
-label = "Reading"
-handle = "ITNEXT"
-url = "https://itnext.io"
+# [[links]]
+# icon = "devdotto"
+# filename = "dev"
+# label = "Reading"
+# handle = "ITNEXT"
+# url = "https://itnext.io"
 
 # [[links]]
 # icon = "discord"
@@ -109,3 +109,9 @@ items = ["Streaming", "Data Lake", "ETL"]
 [[stack]]
 category = "languages"
 items = ["Rust", "Python", "C++", "TypeScript", "C#", "Java", "Go"]
+
+[[reading]]
+title = "The Difference Between the Clever Developer and the Wise Developer"
+url = "https://itnext.io/the-difference-between-the-clever-developer-the-wise-developer-a0edd9d8a692"
+source = "ITNEXT"
+

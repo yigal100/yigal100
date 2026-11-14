@@ -14,6 +14,7 @@ from profile_console.sections.header import build_footer, build_header
 from profile_console.sections.links import build_link_button, build_links_head
 from profile_console.sections.orbital import build_orbital
 from profile_console.sections.projects import build_card, build_projects_head
+from profile_console.sections.reading import build_reading_head, build_reading_row
 from profile_console.sections.stack import build_stack
 from profile_console.sections.stats import build_stats
 from profile_console.sections.writing import build_article_row, build_writing_head, build_writing_more
@@ -66,10 +67,16 @@ def _render_variant(
             build_card(project, side, 0.3 + i * 0.12, theme, stars),
         )
     _write_svg(paths.assets_dir, name("stack"), build_stack(cfg.stack, theme))
-    _write_svg(paths.assets_dir, name("writing"), build_writing_head(theme))
-    for i, article in enumerate(articles[:5]):
-        _write_svg(paths.assets_dir, name(f"writing/post-{i + 1}"), build_article_row(article, i, theme))
-    _write_svg(paths.assets_dir, name("writing/all-articles"), build_writing_more(theme))
+    if articles:
+        _write_svg(paths.assets_dir, name("writing"), build_writing_head(theme))
+        for i, article in enumerate(articles[:5]):
+            _write_svg(paths.assets_dir, name(f"writing/post-{i + 1}"), build_article_row(article, i, theme))
+        _write_svg(paths.assets_dir, name("writing/all-articles"), build_writing_more(theme))
+    if cfg.reading:
+        reading_sec_num = 7 if articles else 6
+        _write_svg(paths.assets_dir, name("reading"), build_reading_head(theme, section_num=reading_sec_num))
+        for i, item in enumerate(cfg.reading):
+            _write_svg(paths.assets_dir, name(f"reading/item-{i + 1}"), build_reading_row(item, i, theme))
     _write_svg(paths.assets_dir, name("footer"), build_footer(cfg.profile, theme))
 
 

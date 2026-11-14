@@ -20,7 +20,7 @@ from typing import Annotated
 
 import typer
 
-from profile_console.config import LinkItem, Paths, ProfileConfig, ProjectItem, load_config
+from profile_console.config import LinkItem, Paths, ProfileConfig, ProjectItem, ReadingItem, load_config
 from profile_console.sections.links import link_slice_bounds
 from profile_console.svg import Theme
 
@@ -86,6 +86,21 @@ def writing_block(articles: list[dict], *, adaptive: bool = False) -> str:
             f'{_img_tag(f"writing/post-{i}", "100%", alt, adaptive=adaptive)}</a>'
         )
     return "<!-- writing:start -->\n" + "\n".join(lines) + "\n<!-- writing:end -->"
+
+
+def reading_block(reading: tuple[ReadingItem, ...], *, adaptive: bool = False) -> str:
+    """Build the markdown/HTML block for recommended reading links."""
+    lines = []
+    for i, item in enumerate(reading, 1):
+        alt = html.escape(
+            f"{item.title} ({item.source})" if item.source else item.title,
+            quote=True,
+        )
+        lines.append(
+            f'<a href="{html.escape(item.url, quote=True)}">'
+            f'{_img_tag(f"reading/item-{i}", "100%", alt, adaptive=adaptive)}</a>'
+        )
+    return "<!-- reading:start -->\n" + "\n".join(lines) + "\n<!-- reading:end -->"
 
 
 def _days(n: int) -> str:
@@ -169,9 +184,25 @@ def _console_block(
             _img_tag("projects", "100%", "Projects", adaptive=adaptive),
             projects_block(cfg.projects, adaptive=adaptive),
             _img_tag("stack", "100%", stack_alt, adaptive=adaptive),
-            _img_tag("writing", "100%", "Writing &amp; Insights: Recommended reading and articles", adaptive=adaptive),
-            writing_block(articles, adaptive=adaptive),
-            f'<a href="{all_url}">{_img_tag("writing/all-articles", "100%", "Read articles &amp; insights", adaptive=adaptive)}</a>',
+        ]
+    )
+    if articles:
+        lines.extend(
+            [
+                _img_tag("writing", "100%", "Writing &amp; Insights: Articles and posts", adaptive=adaptive),
+                writing_block(articles, adaptive=adaptive),
+                f'<a href="{all_url}">{_img_tag("writing/all-articles", "100%", "Read articles &amp; insights", adaptive=adaptive)}</a>',
+            ]
+        )
+    if cfg.reading:
+        lines.extend(
+            [
+                _img_tag("reading", "100%", "Recommended Reading: Curated articles and references", adaptive=adaptive),
+                reading_block(cfg.reading, adaptive=adaptive),
+            ]
+        )
+    lines.extend(
+        [
             _img_tag("footer", "100%", "End of transmission." if is_astro else "Connection closed.", adaptive=adaptive),
             "</p>",
             "<!-- console:end -->",
