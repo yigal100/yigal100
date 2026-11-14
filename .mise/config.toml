@@ -7,6 +7,9 @@ uv = "latest"
 ruff = "latest"
 ty = "latest"
 
+[deps.uv]
+auto = true
+
 [settings]
 experimental = true
 auto_env = true
