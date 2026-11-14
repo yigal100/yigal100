@@ -1,6 +1,7 @@
 {
     "recommendations": [
         "tamasfe.even-better-toml",
-        "davidanson.vscode-markdownlint"
+        "davidanson.vscode-markdownlint",
+        "hverlin.mise-vscode"
     ]
 }

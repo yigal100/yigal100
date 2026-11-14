@@ -5,28 +5,31 @@
   "stars": 0,
   "forks": 0,
   "followers": 4,
-  "commits_year": 120,
-  "commits_all": 350,
-  "prs": 12,
-  "prs_merged": 10,
+  "commits_year": 55,
+  "commits_all": 111,
+  "prs": 1057,
+  "prs_merged": 961,
   "streak_current": 1,
-  "streak_longest": 14,
+  "streak_longest": 5,
   "hackathon_wins": 0,
   "languages": {
-    "Rust": 350000,
-    "TypeScript": 280000,
-    "Python": 180000,
-    "C#": 140000,
-    "Go": 95000,
-    "C++": 85000
+    "TypeScript": 410603,
+    "JavaScript": 121937,
+    "C#": 30551,
+    "SCSS": 25132,
+    "Rust": 20897,
+    "CSS": 12779,
+    "HTML": 2911,
+    "Dockerfile": 489
   },
   "repo_stars": {
+    "assignment": 0,
+    "yigal100": 0,
     "second-brain": 0,
     "photon": 0,
-    "quartz": 0,
-    "yigal100": 0
+    "quartz": 0
   },
   "dev": {},
-  "contributions_year": 145,
-  "contributions_all": 450
+  "contributions_year": 66,
+  "contributions_all": 193
 }

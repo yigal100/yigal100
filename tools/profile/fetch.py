@@ -207,6 +207,21 @@ def fetch_dev(api_key):
     return dev, latest
 
 
+def get_github_token():
+    token = os.environ.get("PROFILE_TOKEN") or os.environ.get("GITHUB_TOKEN")
+    if token:
+        return token, bool(os.environ.get("PROFILE_TOKEN"))
+    try:
+        import shutil, subprocess
+        if shutil.which("gh"):
+            res = subprocess.run(["gh", "auth", "token"], capture_output=True, text=True, check=False)
+            if res.returncode == 0 and res.stdout.strip():
+                return res.stdout.strip(), False
+    except Exception:
+        pass
+    return None, False
+
+
 # ──────────────────────────────── main ─────────────────────────────────
 def main():
     today = datetime.datetime.now(datetime.timezone.utc).date()
@@ -214,18 +229,18 @@ def main():
     articles = load("articles.json", [])
     ok = False
 
-    token = os.environ.get("PROFILE_TOKEN") or os.environ.get("GITHUB_TOKEN")
+    token, has_profile_token = get_github_token()
     if token:
         try:
             gh = fetch_github(token, today)
             save("calendar.json", gh.pop("_calendar"))
             stats.update(gh)
             ok = True
-            print("github: ok" + (" (with private contributions)" if os.environ.get("PROFILE_TOKEN") else " (public only)"))
+            print("github: ok" + (" (with private contributions)" if has_profile_token else " (public only)"))
         except Exception as ex:  # noqa: BLE001
             warn(f"GitHub fetch failed, keeping previous stats: {ex}")
     else:
-        warn("No PROFILE_TOKEN or GITHUB_TOKEN set, skipping GitHub")
+        warn("No PROFILE_TOKEN or GITHUB_TOKEN set, and gh CLI token unavailable; skipping GitHub")
 
     if DEV_USER:
         try:
