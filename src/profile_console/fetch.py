@@ -224,19 +224,27 @@ def fetch_dev(dev_user: str, api_key: str | None, user_agent: str) -> tuple[dict
     return dev, latest
 
 
-def get_github_token() -> tuple[str | None, bool]:
-    """Resolve GitHub token from env vars or gh CLI."""
-    token = os.environ.get("PROFILE_TOKEN") or os.environ.get("GITHUB_TOKEN")
-    if token:
-        return token, bool(os.environ.get("PROFILE_TOKEN"))
+def get_github_tokens() -> tuple[str | None, str | None]:
+    """Resolve (primary_token, fallback_public_token) from env vars or gh CLI.
+
+    When both PROFILE_TOKEN and GITHUB_TOKEN are set, PROFILE_TOKEN is primary
+    and GITHUB_TOKEN is used as a secondary token for public-profile calendar
+    fallback (e.g. when an org IP allow list blocks PAT calendar reads).
+    """
+    profile_token = os.environ.get("PROFILE_TOKEN") or None
+    github_token = os.environ.get("GITHUB_TOKEN") or None
+    if profile_token:
+        return profile_token, github_token if github_token != profile_token else None
+    if github_token:
+        return github_token, None
     try:
         if shutil.which("gh"):
             res = subprocess.run(["gh", "auth", "token"], capture_output=True, text=True, check=False)
             if res.returncode == 0 and res.stdout.strip():
-                return res.stdout.strip(), False
+                return res.stdout.strip(), None
     except Exception:
         pass
-    return None, False
+    return None, None
 
 
 def fetch_data(
@@ -258,14 +266,36 @@ def fetch_data(
     articles = _load_json(paths.data_dir, "articles.json", [])
     ok = False
 
-    token, has_profile_token = get_github_token()
+    token, public_token = get_github_tokens()
+    has_profile_token = bool(os.environ.get("PROFILE_TOKEN"))
     if token:
         try:
             gh = fetch_github(cfg.profile.github_user, token, today, user_agent)
+            calendar_fallback = False
+            if has_profile_token and public_token:
+                try:
+                    pub = fetch_github(cfg.profile.github_user, public_token, today, user_agent)
+                    if pub["contributions_all"] > gh["contributions_all"]:
+                        for key in (
+                            "contributions_year",
+                            "contributions_all",
+                            "streak_current",
+                            "streak_longest",
+                            "_calendar",
+                        ):
+                            gh[key] = pub[key]
+                        calendar_fallback = True
+                except Exception as ex:  # noqa: BLE001 — secondary fetch should never fail primary
+                    _warn(f"Public calendar fallback failed, keeping primary calendar: {ex}")
             _save_json(paths.data_dir, "calendar.json", gh.pop("_calendar"))
             stats.update(gh)
             ok = True
-            print("github: ok" + (" (with private contributions)" if has_profile_token else " (public only)"))
+            mode = (
+                "with private contributions + public calendar fallback"
+                if calendar_fallback
+                else ("with private contributions" if has_profile_token else "public only")
+            )
+            print(f"github: ok ({mode})")
         except Exception as ex:  # noqa: BLE001
             _warn(f"GitHub fetch failed, keeping previous stats: {ex}")
     else:
