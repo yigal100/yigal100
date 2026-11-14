@@ -1,4 +1,4 @@
-"""Fetches fresh profile data from GitHub and DEV into data/stats.json, data/articles.json
+"""Fetches fresh profile data from GitHub and DEV into data/stats.json, data/articles.json,
 and data/calendar.json (last 53 weeks of daily contributions).
 
 Environment variables (all optional):
@@ -11,75 +11,23 @@ Each source is fetched independently. If one fails, its previous values are kept
 so a flaky API never blanks out part of the profile.
 """
 
+from __future__ import annotations
+
 import datetime
 import json
 import os
 import pathlib
+import shutil
+import subprocess
 import sys
-import urllib.error
 import urllib.parse
 import urllib.request
+from typing import Annotated
 
-PKG_DIR = pathlib.Path(__file__).resolve().parent
+import typer
 
+from profile_console.config import Paths, load_config
 
-def get_repo_root() -> pathlib.Path:
-    for parent in [PKG_DIR, *PKG_DIR.parents]:
-        if (parent / "pyproject.toml").exists() or (parent / ".git").exists():
-            return parent
-    return pathlib.Path.cwd()
-
-
-ROOT = get_repo_root()
-DATA = ROOT / "data" if (ROOT / "data").exists() else ROOT / "tools" / "profile" / "data"
-USER = os.environ.get("GITHUB_ACTOR") or "yigal100"
-DEV_USER = os.environ.get("DEV_USER", "")
-HACKATHON_WINS = int(os.environ.get("HACKATHON_WINS", "0"))
-UA = f"{USER}-profile-updater"
-
-
-# ─────────────────────────────── helpers ───────────────────────────────
-def http_json(url, *, headers=None, body=None, timeout=30):
-    req = urllib.request.Request(
-        url,
-        data=None if body is None else json.dumps(body).encode(),
-        headers={"User-Agent": UA, "Accept": "application/json", **(headers or {})},
-    )
-    if body is not None:
-        req.add_header("Content-Type", "application/json")
-    with urllib.request.urlopen(req, timeout=timeout) as r:
-        return json.loads(r.read().decode())
-
-
-def graphql(token, query, variables=None):
-    res = http_json(
-        "https://api.github.com/graphql",
-        headers={"Authorization": f"bearer {token}"},
-        body={"query": query, "variables": variables or {}},
-    )
-    if res.get("errors"):
-        raise RuntimeError("GraphQL error: " + "; ".join(e.get("message", "?") for e in res["errors"]))
-    return res["data"]
-
-
-def load(name, default):
-    try:
-        return json.loads((DATA / name).read_text())
-    except (FileNotFoundError, json.JSONDecodeError):
-        return default
-
-
-def save(name, obj):
-    DATA.mkdir(parents=True, exist_ok=True)
-    (DATA / name).write_text(json.dumps(obj, indent=2, ensure_ascii=False) + "\n")
-
-
-def warn(msg):
-    # "::warning::" makes the message show up as an annotation on the Actions run page
-    print(f"::warning::{msg}" if os.environ.get("GITHUB_ACTIONS") else f"warning: {msg}", file=sys.stderr)
-
-
-# ─────────────────────────────── GitHub ────────────────────────────────
 PROFILE_QUERY = """
 query($login: String!) {
   user(login: $login) {
@@ -100,19 +48,61 @@ query($login: String!) {
 }"""
 
 
-def years_query(years):
-    parts = []
-    for y in years:
-        parts.append(f"""
+def _http_json(url: str, *, user_agent: str, headers: dict | None = None, body: dict | None = None, timeout: int = 30):
+    req = urllib.request.Request(
+        url,
+        data=None if body is None else json.dumps(body).encode(),
+        headers={"User-Agent": user_agent, "Accept": "application/json", **(headers or {})},
+    )
+    if body is not None:
+        req.add_header("Content-Type", "application/json")
+    with urllib.request.urlopen(req, timeout=timeout) as resp:
+        return json.loads(resp.read().decode())
+
+
+def _graphql(token: str, user_agent: str, query: str, variables: dict | None = None) -> dict:
+    res = _http_json(
+        "https://api.github.com/graphql",
+        user_agent=user_agent,
+        headers={"Authorization": f"bearer {token}"},
+        body={"query": query, "variables": variables or {}},
+    )
+    if res.get("errors"):
+        raise RuntimeError("GraphQL error: " + "; ".join(e.get("message", "?") for e in res["errors"]))
+    return res["data"]
+
+
+def _load_json(data_dir: pathlib.Path, name: str, default):
+    try:
+        return json.loads((data_dir / name).read_text(encoding="utf-8"))
+    except (FileNotFoundError, json.JSONDecodeError):
+        return default
+
+
+def _save_json(data_dir: pathlib.Path, name: str, obj) -> None:
+    data_dir.mkdir(parents=True, exist_ok=True)
+    (data_dir / name).write_text(json.dumps(obj, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+
+def _warn(msg: str) -> None:
+    # "::warning::" makes the message show up as an annotation on the Actions run page
+    print(f"::warning::{msg}" if os.environ.get("GITHUB_ACTIONS") else f"warning: {msg}", file=sys.stderr)
+
+
+def _years_query(years: list[int]) -> str:
+    parts = [
+        f"""
     y{y}: contributionsCollection(from: "{y}-01-01T00:00:00Z", to: "{y}-12-31T23:59:59Z") {{
       totalCommitContributions
       contributionCalendar {{ totalContributions weeks {{ contributionDays {{ date contributionCount }} }} }}
-    }}""")
+    }}"""
+        for y in years
+    ]
     return "query($login: String!) {\n  user(login: $login) {" + "".join(parts) + "\n  }\n}"
 
 
-def streaks(days, today):
-    """days: {date: count}. Current streak may end yesterday if today has no contributions yet."""
+def _streaks(days: dict[datetime.date, int], today: datetime.date) -> tuple[int, int]:
+    """Return (current_streak, longest_streak). Current streak may end yesterday if today has 0."""
     dates = sorted(d for d in days if d <= today)
     longest = run = 0
     for d in dates:
@@ -127,21 +117,22 @@ def streaks(days, today):
     return current, longest
 
 
-def fetch_github(token, today):
-    u = graphql(token, PROFILE_QUERY, {"login": USER})["user"]
+def fetch_github(user: str, token: str, today: datetime.date, user_agent: str) -> dict:
+    """Fetch GitHub profile stats and 53-week contribution calendar."""
+    u = _graphql(token, user_agent, PROFILE_QUERY, {"login": user})["user"]
     years = sorted(u["contributionsCollection"]["contributionYears"])
-    ydata = graphql(token, years_query(years), {"login": USER})["user"] if years else {}
+    ydata = _graphql(token, user_agent, _years_query(years), {"login": user})["user"] if years else {}
 
-    days, commits_all, contribs_all = {}, 0, 0
+    days: dict[datetime.date, int] = {}
+    commits_all = contribs_all = 0
     for y in years:
         c = ydata[f"y{y}"]
         commits_all += c["totalCommitContributions"]
         contribs_all += c["contributionCalendar"]["totalContributions"]
-        for w in c["contributionCalendar"]["weeks"]:
-            for day in w["contributionDays"]:
+        for week in c["contributionCalendar"]["weeks"]:
+            for day in week["contributionDays"]:
                 days[datetime.date.fromisoformat(day["date"])] = day["contributionCount"]
-    current, longest = streaks(days, today)
-    # last 53 weeks, starting on a Sunday like GitHub's own graph (feeds the contribution city)
+    current, longest = _streaks(days, today)
     start = today - datetime.timedelta(weeks=52)
     start -= datetime.timedelta(days=(start.weekday() + 1) % 7)
     calendar = [
@@ -150,13 +141,11 @@ def fetch_github(token, today):
     ]
 
     repos = u["repositories"]["nodes"]
-    langs = {}
-    for r in repos:
-        for edge in r["languages"]["edges"]:
+    langs: dict[str, int] = {}
+    for repo in repos:
+        for edge in repo["languages"]["edges"]:
             langs[edge["node"]["name"]] = langs.get(edge["node"]["name"], 0) + edge["size"]
     cur = ydata.get(f"y{today.year}", {})
-    this_year = cur.get("totalCommitContributions", 0)
-    contribs_year = cur.get("contributionCalendar", {}).get("totalContributions", 0)
     return {
         "created_at": u["createdAt"],
         "followers": u["followers"]["totalCount"],
@@ -167,9 +156,9 @@ def fetch_github(token, today):
         "repo_stars": {r["name"]: r["stargazerCount"] for r in repos},
         "languages": dict(sorted(langs.items(), key=lambda kv: -kv[1])),
         "year": today.year,
-        "commits_year": this_year,
+        "commits_year": cur.get("totalCommitContributions", 0),
         "commits_all": commits_all,
-        "contributions_year": contribs_year,
+        "contributions_year": cur.get("contributionCalendar", {}).get("totalContributions", 0),
         "contributions_all": contribs_all,
         "streak_current": current,
         "streak_longest": longest,
@@ -177,12 +166,12 @@ def fetch_github(token, today):
     }
 
 
-# ──────────────────────────────── DEV ──────────────────────────────────
-def dev_paged(url, headers=None):
-    out, page = [], 1
+def _dev_paged(url: str, user_agent: str, headers: dict | None = None) -> list[dict]:
+    out: list[dict] = []
+    page = 1
     while True:
         sep = "&" if "?" in url else "?"
-        batch = http_json(f"{url}{sep}per_page=1000&page={page}", headers=headers)
+        batch = _http_json(f"{url}{sep}per_page=1000&page={page}", user_agent=user_agent, headers=headers)
         if not batch:
             return out
         out.extend(batch)
@@ -191,12 +180,13 @@ def dev_paged(url, headers=None):
         page += 1
 
 
-def fetch_dev(api_key):
-    if not DEV_USER:
+def fetch_dev(dev_user: str, api_key: str | None, user_agent: str) -> tuple[dict, list[dict]]:
+    """Fetch DEV Community stats and latest 5 articles."""
+    if not dev_user:
         return {}, []
-    arts = dev_paged(f"https://dev.to/api/articles?username={urllib.parse.quote(DEV_USER)}")
+    arts = _dev_paged(f"https://dev.to/api/articles?username={urllib.parse.quote(dev_user)}", user_agent)
     arts.sort(key=lambda a: a["published_at"], reverse=True)
-    dev = {
+    dev: dict[str, int | None] = {
         "articles": len(arts),
         "reactions": sum(a.get("public_reactions_count", 0) for a in arts),
         "comments": sum(a.get("comments_count", 0) for a in arts),
@@ -206,11 +196,9 @@ def fetch_dev(api_key):
     if api_key:
         h = {"api-key": api_key, "Accept": "application/vnd.forem.api-v1+json"}
         try:
-            mine = dev_paged("https://dev.to/api/articles/me/published", h)
+            mine = _dev_paged("https://dev.to/api/articles/me/published", user_agent, h)
             dev["views"] = sum(a.get("page_views_count", 0) for a in mine)
             if mine:
-                # the public list can be served stale from DEV's cache for a while after
-                # publishing; this authenticated list isn't, so prefer it for the latest posts
                 arts = sorted(mine, key=lambda a: a["published_at"], reverse=True)
                 dev.update(
                     articles=len(arts),
@@ -218,11 +206,11 @@ def fetch_dev(api_key):
                     comments=sum(a.get("comments_count", 0) for a in arts),
                 )
         except Exception as ex:  # noqa: BLE001 — one missing tile shouldn't fail the run
-            warn(f"DEV views unavailable: {ex}")
+            _warn(f"DEV views unavailable: {ex}")
         try:
-            dev["followers"] = len(dev_paged("https://dev.to/api/followers/users", h))
+            dev["followers"] = len(_dev_paged("https://dev.to/api/followers/users", user_agent, h))
         except Exception as ex:  # noqa: BLE001
-            warn(f"DEV followers unavailable: {ex}")
+            _warn(f"DEV followers unavailable: {ex}")
     latest = [
         {
             "published_at": a["published_at"],
@@ -236,14 +224,12 @@ def fetch_dev(api_key):
     return dev, latest
 
 
-def get_github_token():
+def get_github_token() -> tuple[str | None, bool]:
+    """Resolve GitHub token from env vars or gh CLI."""
     token = os.environ.get("PROFILE_TOKEN") or os.environ.get("GITHUB_TOKEN")
     if token:
         return token, bool(os.environ.get("PROFILE_TOKEN"))
     try:
-        import shutil
-        import subprocess
-
         if shutil.which("gh"):
             res = subprocess.run(["gh", "auth", "token"], capture_output=True, text=True, check=False)
             if res.returncode == 0 and res.stdout.strip():
@@ -253,50 +239,60 @@ def get_github_token():
     return None, False
 
 
-# ──────────────────────────────── main ─────────────────────────────────
-def fetch_data() -> None:
+def fetch_data(
+    data: Annotated[
+        pathlib.Path | None,
+        typer.Option("--data", help="Folder to write stats.json, articles.json, and calendar.json"),
+    ] = None,
+    config: Annotated[
+        pathlib.Path | None,
+        typer.Option("--config", help="Path to profile.toml"),
+    ] = None,
+) -> None:
     """Fetch latest stats into data/*.json."""
+    paths = Paths.resolve(data_dir=data, config_path=config)
+    cfg = load_config(paths.config_path)
+    user_agent = f"{cfg.profile.github_user}-profile-updater"
     today = datetime.datetime.now(datetime.UTC).date()
-    stats = load("stats.json", {})
-    articles = load("articles.json", [])
+    stats = _load_json(paths.data_dir, "stats.json", {})
+    articles = _load_json(paths.data_dir, "articles.json", [])
     ok = False
 
     token, has_profile_token = get_github_token()
     if token:
         try:
-            gh = fetch_github(token, today)
-            save("calendar.json", gh.pop("_calendar"))
+            gh = fetch_github(cfg.profile.github_user, token, today, user_agent)
+            _save_json(paths.data_dir, "calendar.json", gh.pop("_calendar"))
             stats.update(gh)
             ok = True
             print("github: ok" + (" (with private contributions)" if has_profile_token else " (public only)"))
         except Exception as ex:  # noqa: BLE001
-            warn(f"GitHub fetch failed, keeping previous stats: {ex}")
+            _warn(f"GitHub fetch failed, keeping previous stats: {ex}")
     else:
-        warn("No PROFILE_TOKEN or GITHUB_TOKEN set, and gh CLI token unavailable; skipping GitHub")
+        _warn("No PROFILE_TOKEN or GITHUB_TOKEN set, and gh CLI token unavailable; skipping GitHub")
 
-    if DEV_USER:
+    if cfg.profile.dev_user:
         try:
-            dev, latest = fetch_dev(os.environ.get("DEV_API_KEY"))
+            dev, latest = fetch_dev(cfg.profile.dev_user, os.environ.get("DEV_API_KEY"), user_agent)
             prev = stats.get("dev") or {}
-            # keep a previously known value rather than dropping a tile when the key-only calls fail
             stats["dev"] = {k: (v if v is not None else prev.get(k)) for k, v in dev.items()}
             if latest:
                 articles = latest
             ok = True
             print("dev: ok" + ("" if os.environ.get("DEV_API_KEY") else " (public only, no DEV_API_KEY)"))
         except Exception as ex:  # noqa: BLE001
-            warn(f"DEV fetch failed, keeping previous values: {ex}")
+            _warn(f"DEV fetch failed, keeping previous values: {ex}")
     else:
         stats["dev"] = {}
 
     if not ok:
         print("error: every source failed, nothing updated", file=sys.stderr)
         sys.exit(1)
-    stats["hackathon_wins"] = HACKATHON_WINS
+    stats["hackathon_wins"] = cfg.profile.hackathon_wins
     stats["updated"] = today.isoformat()
-    save("stats.json", stats)
-    save("articles.json", articles)
+    _save_json(paths.data_dir, "stats.json", stats)
+    _save_json(paths.data_dir, "articles.json", articles)
 
 
 if __name__ == "__main__":
-    fetch_data()
+    typer.run(fetch_data)

@@ -1,0 +1,108 @@
+[profile]
+github_user = "yigal100"
+dev_user = ""
+hackathon_wins = 0
+
+name = "YIGAL CHRIPUN"
+handle = "yigal100"
+tagline_handle = "@YIGAL100"
+node_label = "SYS://YIGAL100 // NODE:YIGAL"
+status_label = "ONLINE · ALL SYSTEMS NOMINAL"
+header_title = "Yigal Chripun"
+header_desc = "Software architecture & design. Cloud systems & data pipelines (AWS). Alignment: Chaotic Good."
+bio = [
+  "software architecture & design · continuous learner",
+  "cloud systems & data pipelines (AWS)",
+  "alignment: chaotic good · ",
+]
+
+[[links]]
+icon = "github"
+label = "GitHub"
+handle = "@yigal100"
+url = "https://github.com/yigal100"
+
+[[links]]
+icon = "linkedin"
+label = "LinkedIn"
+handle = "in/yigal"
+url = "https://www.linkedin.com/in/yigal-chripun/"
+
+[[links]]
+icon = "x"
+label = "X"
+handle = "@yigal100"
+url = "https://x.com/yigal100"
+
+[[links]]
+icon = "devdotto"
+filename = "dev"
+label = "Reading"
+handle = "ITNEXT"
+url = "https://itnext.io"
+
+[[links]]
+icon = "discord"
+label = "Discord"
+handle = "say hi"
+url = "https://discord.com"
+
+[[projects]]
+slug = "second-brain"
+name = "Second Brain"
+url = "https://github.com/yigal100/second-brain"
+tag = "KNOWLEDGE BASE"
+tag_color = "green"
+stars = 0
+stack = "Obsidian · Markdown · PKM"
+desc = "Personal knowledge base and digital garden for software architecture, research notes, and continuous learning."
+
+[[projects]]
+slug = "photon"
+name = "Photon"
+url = "https://github.com/yigal100/photon"
+tag = "SYSTEMS"
+tag_color = "green"
+stars = 0
+stack = "Rust · High Performance"
+desc = "Systems software exploring performance, concurrency, and modular architecture in Rust."
+
+[[projects]]
+slug = "quartz"
+name = "Quartz"
+url = "https://github.com/yigal100/quartz"
+tag = "DIGITAL GARDEN"
+tag_color = "magenta"
+stars = 0
+stack = "TypeScript · Quartz · Web"
+desc = "Digital garden publishing workflow rendering interconnected knowledge notes to the web."
+
+[[projects]]
+slug = "yigal100"
+name = "Profile Console"
+url = "https://github.com/yigal100/yigal100"
+tag = "AUTOMATION"
+tag_color = "magenta"
+stars = 0
+stack = "Python · GitHub Actions · SVG"
+desc = "Dynamic terminal profile console displaying live GitHub stats, contribution skyline, and loadout."
+
+[[stack]]
+category = "architecture"
+items = ["System Design", "Cloud Architecture", "Distributed Systems"]
+
+[[stack]]
+category = "cloud & aws"
+items = ["AWS", "Containers", "Serverless", "Event-Driven"]
+
+[[stack]]
+category = "languages"
+items = ["Rust", "TypeScript", "Python", "C#", "Go", "C++"]
+
+[[stack]]
+category = "practices"
+items = ["Continuous Learning", "Clean Code", "Design Patterns"]
+
+[[stack]]
+category = "tooling"
+items = ["Obsidian", "Git", "Docker", "Linux"]

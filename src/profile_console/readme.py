@@ -7,29 +7,23 @@
 Everything else in the README is left exactly as it is.
 """
 
+from __future__ import annotations
+
 import datetime
 import html
 import json
 import pathlib
 import re
 import sys
+from typing import Annotated
 
-HERE = pathlib.Path(__file__).resolve().parent
+import typer
 
-
-def get_repo_root() -> pathlib.Path:
-    for parent in [HERE, *HERE.parents]:
-        if (parent / "pyproject.toml").exists() or (parent / ".git").exists():
-            return parent
-    return pathlib.Path.cwd()
+from profile_console.config import Paths
 
 
-ROOT = get_repo_root()
-README = ROOT / "README.md"
-DATA = ROOT / "data" if (ROOT / "data").exists() else ROOT / "tools" / "profile" / "data"
-
-
-def writing_block(articles):
+def writing_block(articles: list[dict]) -> str:
+    """Build the markdown/HTML block for the latest 5 articles."""
     lines = []
     for i, a in enumerate(articles[:5], 1):
         alt = html.escape(
@@ -43,11 +37,12 @@ def writing_block(articles):
     return "<!-- writing:start -->\n" + "\n".join(lines) + "\n<!-- writing:end -->"
 
 
-def days(n):
+def _days(n: int) -> str:
     return f"{n} day" if n == 1 else f"{n} days"
 
 
-def stats_alt(d):
+def stats_alt(d: dict) -> str:
+    """Build accessible alt text summarizing GitHub and DEV stats."""
     since = datetime.date.fromisoformat(d["created_at"][:10])
     langs = sorted(d["languages"].items(), key=lambda kv: -kv[1])[:5]
     parts = [
@@ -58,7 +53,7 @@ def stats_alt(d):
             else f"{d['commits_year']} commits in {d['year']}, {d['commits_all']} all time"
         ),
         f"{d['prs']} pull requests ({d['prs_merged']} merged)",
-        f"current streak {days(d['streak_current'])}, longest {days(d['streak_longest'])}",
+        f"current streak {_days(d['streak_current'])}, longest {_days(d['streak_longest'])}",
         f"{d['followers']} followers",
         f"{d['forks']} forks",
         f"member since {since:%B %Y}",
@@ -71,7 +66,8 @@ def stats_alt(d):
     return html.escape(text, quote=True)
 
 
-def city_alt(calendar):
+def city_alt(calendar: list[list]) -> str:
+    """Build accessible alt text summarizing the contribution city skyline."""
     total = sum(n for _, n in calendar)
     busiest = max(calendar, key=lambda t: t[1]) if calendar else None
     text = (
@@ -84,11 +80,17 @@ def city_alt(calendar):
     return html.escape(text + ".", quote=True)
 
 
-def update_readme() -> None:
+def update_readme(
+    data: Annotated[
+        pathlib.Path | None,
+        typer.Option("--data", help="Folder with stats.json and articles.json"),
+    ] = None,
+) -> None:
     """Synchronize dynamic README.md blocks."""
-    stats = json.loads((DATA / "stats.json").read_text())
-    articles = json.loads((DATA / "articles.json").read_text())
-    s = README.read_text()
+    paths = Paths.resolve(data_dir=data)
+    stats = json.loads((paths.data_dir / "stats.json").read_text(encoding="utf-8"))
+    articles = json.loads((paths.data_dir / "articles.json").read_text(encoding="utf-8"))
+    s = paths.readme_path.read_text(encoding="utf-8")
 
     s, n = re.subn(
         r"<!-- writing:start -->.*?<!-- writing:end -->", lambda _: writing_block(articles), s, flags=re.DOTALL
@@ -97,22 +99,24 @@ def update_readme() -> None:
         sys.exit("error: README needs exactly one <!-- writing:start --> … <!-- writing:end --> block")
 
     s, n = re.subn(
-        r'(<img src="\./assets/stats\.svg"[^>]*?alt=")[^"]*(")', lambda m: m.group(1) + stats_alt(stats) + m.group(2), s
+        r'(<img src="\./assets/stats\.svg"[^>]*?alt=")[^"]*(")',
+        lambda m: m.group(1) + stats_alt(stats) + m.group(2),
+        s,
     )
     if n != 1:
         sys.exit("error: README needs exactly one stats.svg image with an alt attribute")
 
-    cal_file = DATA / "calendar.json"
-    if cal_file.exists():  # optional section: only touched when the README has the city image
+    cal_file = paths.data_dir / "calendar.json"
+    if cal_file.exists():
         s = re.sub(
             r'(<img src="\./assets/contribution-city\.svg"[^>]*?alt=")[^"]*(")',
-            lambda mm: mm.group(1) + city_alt(json.loads(cal_file.read_text())) + mm.group(2),
+            lambda mm: mm.group(1) + city_alt(json.loads(cal_file.read_text(encoding="utf-8"))) + mm.group(2),
             s,
         )
 
-    README.write_text(s)
+    paths.readme_path.write_text(s, encoding="utf-8")
     print("README updated")
 
 
 if __name__ == "__main__":
-    update_readme()
+    typer.run(update_readme)
