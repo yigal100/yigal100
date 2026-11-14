@@ -2,6 +2,7 @@
 markdownlint-cli2 = "latest"
 git-cliff = "latest"
 act = "latest"
+python = "3.12"
 
 [settings]
 experimental = true
