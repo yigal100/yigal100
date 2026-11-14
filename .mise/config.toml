@@ -21,22 +21,23 @@ skills.auto_sync = true
 
 [tasks.render]
 description = "Render profile SVGs from data/*.json"
-run = "uv run python tools/profile/render.py"
+run = "uv run profile render"
 
 [tasks.fetch]
 description = "Fetch latest GitHub and DEV stats into data/*.json"
-run = "uv run python tools/profile/fetch.py"
+run = "uv run profile fetch"
 
 [tasks.update]
 description = "Render profile SVGs and synchronize README.md"
-run = """
-uv run python tools/profile/render.py
-uv run python tools/profile/readme.py
-"""
+run = "uv run profile update"
 
 [tasks.lint]
 description = "Lint Python code with ruff"
 run = "ruff check ."
+
+[tasks."lint:md"]
+description = "Lint markdown files with markdownlint-cli2"
+run = "markdownlint-cli2 '**/*.md'"
 
 [tasks.fmt]
 description = "Format Python code with ruff"

@@ -1,0 +1,13 @@
+{
+  "servers": {
+    "mise": {
+      "type": "stdio",
+      "command": "mise",
+      "args": [
+        "--cd",
+        "${workspaceFolder}",
+        "mcp"
+      ]
+    }
+  }
+}

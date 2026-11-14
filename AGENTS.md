@@ -38,15 +38,20 @@ yigal100/
 ├── .mise/
 │   ├── config.toml             # Mise tools and automation tasks
 │   └── config.local.toml.sample
-├── .vscode/                    # Editor settings and recommendations
+├── .vscode/                    # Editor settings, recommendations, and MCP servers
+├── .mcp.json                   # Root Model Context Protocol (MCP) server configuration
 ├── assets/                     # Rendered profile SVGs
-├── tools/
-│   └── profile/
-│       ├── data/               # Cached stats and calendar data
+├── data/                       # Cached GitHub stats and calendar data
+├── src/
+│   └── profile_console/        # Python package for profile console
 │       ├── fonts/              # Source JetBrains Mono WOFF2 fonts
+│       ├── icons.json          # Simple Icons glyph paths
 │       ├── fetch.py            # API fetcher
 │       ├── render.py           # SVG renderer with font subsetter
-│       └── readme.py           # README synchronizer
+│       ├── readme.py           # README synchronizer
+│       └── cli.py              # CLI entrypoint
+├── pyproject.toml              # UV / Python project configuration
+├── uv.lock                     # UV pinned lockfile
 ├── AGENTS.md                   # Agent guidelines and standards
 ├── CHANGELOG.md                # Generated changelog
 ├── cliff.toml                  # Git-cliff configuration
@@ -61,7 +66,7 @@ yigal100/
 
 When working in this repository:
 
-1. **Deterministic Rendering**: The embedded JetBrains Mono fonts in `tools/profile/render.py` are subset deterministically. Do not introduce external non-deterministic timestamps or unpinned fonts that cause unnecessary diff churn.
+1. **Deterministic Rendering**: The embedded JetBrains Mono fonts in `src/profile_console/render.py` are subset deterministically. Do not introduce external non-deterministic timestamps or unpinned fonts that cause unnecessary diff churn.
 2. **Resilience**: Data fetch failures should degrade gracefully without corrupting existing profile SVGs or data files.
 3. **Conventional Commits**: Format all git commit messages strictly according to Conventional Commits.
 4. **Markdown Quality**: Respect markdownlint rules when editing or creating markdown documents.

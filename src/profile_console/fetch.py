@@ -10,6 +10,7 @@ Environment variables (all optional):
 Each source is fetched independently. If one fails, its previous values are kept,
 so a flaky API never blanks out part of the profile.
 """
+
 import datetime
 import json
 import os
@@ -19,17 +20,31 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
+PKG_DIR = pathlib.Path(__file__).resolve().parent
+
+
+def get_repo_root() -> pathlib.Path:
+    for parent in [PKG_DIR, *PKG_DIR.parents]:
+        if (parent / "pyproject.toml").exists() or (parent / ".git").exists():
+            return parent
+    return pathlib.Path.cwd()
+
+
+ROOT = get_repo_root()
+DATA = ROOT / "data" if (ROOT / "data").exists() else ROOT / "tools" / "profile" / "data"
 USER = os.environ.get("GITHUB_ACTOR") or "yigal100"
 DEV_USER = os.environ.get("DEV_USER", "")
 HACKATHON_WINS = int(os.environ.get("HACKATHON_WINS", "0"))
-DATA = pathlib.Path(__file__).resolve().parent / "data"
 UA = f"{USER}-profile-updater"
 
 
 # ─────────────────────────────── helpers ───────────────────────────────
 def http_json(url, *, headers=None, body=None, timeout=30):
-    req = urllib.request.Request(url, data=None if body is None else json.dumps(body).encode(),
-                                 headers={"User-Agent": UA, "Accept": "application/json", **(headers or {})})
+    req = urllib.request.Request(
+        url,
+        data=None if body is None else json.dumps(body).encode(),
+        headers={"User-Agent": UA, "Accept": "application/json", **(headers or {})},
+    )
     if body is not None:
         req.add_header("Content-Type", "application/json")
     with urllib.request.urlopen(req, timeout=timeout) as r:
@@ -37,8 +52,11 @@ def http_json(url, *, headers=None, body=None, timeout=30):
 
 
 def graphql(token, query, variables=None):
-    res = http_json("https://api.github.com/graphql", headers={"Authorization": f"bearer {token}"},
-                    body={"query": query, "variables": variables or {}})
+    res = http_json(
+        "https://api.github.com/graphql",
+        headers={"Authorization": f"bearer {token}"},
+        body={"query": query, "variables": variables or {}},
+    )
     if res.get("errors"):
         raise RuntimeError("GraphQL error: " + "; ".join(e.get("message", "?") for e in res["errors"]))
     return res["data"]
@@ -126,8 +144,10 @@ def fetch_github(token, today):
     # last 53 weeks, starting on a Sunday like GitHub's own graph (feeds the contribution city)
     start = today - datetime.timedelta(weeks=52)
     start -= datetime.timedelta(days=(start.weekday() + 1) % 7)
-    calendar = [[d.isoformat(), days.get(d, 0)] for d in
-                (start + datetime.timedelta(days=i) for i in range((today - start).days + 1))]
+    calendar = [
+        [d.isoformat(), days.get(d, 0)]
+        for d in (start + datetime.timedelta(days=i) for i in range((today - start).days + 1))
+    ]
 
     repos = u["repositories"]["nodes"]
     langs = {}
@@ -192,18 +212,27 @@ def fetch_dev(api_key):
                 # the public list can be served stale from DEV's cache for a while after
                 # publishing; this authenticated list isn't, so prefer it for the latest posts
                 arts = sorted(mine, key=lambda a: a["published_at"], reverse=True)
-                dev.update(articles=len(arts),
-                           reactions=sum(a.get("public_reactions_count", 0) for a in arts),
-                           comments=sum(a.get("comments_count", 0) for a in arts))
+                dev.update(
+                    articles=len(arts),
+                    reactions=sum(a.get("public_reactions_count", 0) for a in arts),
+                    comments=sum(a.get("comments_count", 0) for a in arts),
+                )
         except Exception as ex:  # noqa: BLE001 — one missing tile shouldn't fail the run
             warn(f"DEV views unavailable: {ex}")
         try:
             dev["followers"] = len(dev_paged("https://dev.to/api/followers/users", h))
         except Exception as ex:  # noqa: BLE001
             warn(f"DEV followers unavailable: {ex}")
-    latest = [{"published_at": a["published_at"], "title": a["title"], "url": a["url"],
-               "reactions": a.get("public_reactions_count", 0), "comments": a.get("comments_count", 0)}
-              for a in arts[:5]]
+    latest = [
+        {
+            "published_at": a["published_at"],
+            "title": a["title"],
+            "url": a["url"],
+            "reactions": a.get("public_reactions_count", 0),
+            "comments": a.get("comments_count", 0),
+        }
+        for a in arts[:5]
+    ]
     return dev, latest
 
 
@@ -212,7 +241,9 @@ def get_github_token():
     if token:
         return token, bool(os.environ.get("PROFILE_TOKEN"))
     try:
-        import shutil, subprocess
+        import shutil
+        import subprocess
+
         if shutil.which("gh"):
             res = subprocess.run(["gh", "auth", "token"], capture_output=True, text=True, check=False)
             if res.returncode == 0 and res.stdout.strip():
@@ -224,7 +255,7 @@ def get_github_token():
 
 # ──────────────────────────────── main ─────────────────────────────────
 def main():
-    today = datetime.datetime.now(datetime.timezone.utc).date()
+    today = datetime.datetime.now(datetime.UTC).date()
     stats = load("stats.json", {})
     articles = load("articles.json", [])
     ok = False

@@ -1,10 +1,37 @@
 [project]
-name = "yigal100"
+name = "profile-console"
 version = "0.1.0"
-description = "Add your description here"
+description = "Dynamic cyberpunk terminal profile generator for GitHub"
 readme = "README.md"
+authors = [
+    { name = "Yigal Chripun", email = "579788+yigal100@users.noreply.github.com" }
+]
 requires-python = ">=3.12"
 dependencies = [
     "brotli==1.2.0",
     "fonttools==4.62.1",
+]
+
+[project.scripts]
+profile = "profile_console.cli:main"
+profile-fetch = "profile_console.fetch:main"
+profile-render = "profile_console.render:main"
+profile-readme = "profile_console.readme:main"
+profile-update = "profile_console.cli:update"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/profile_console"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W", "UP"]
+ignore = [
+    "E501",  # line length (multiline SVG markup and templates)
 ]
