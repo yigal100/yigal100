@@ -28,11 +28,11 @@ label = "LinkedIn"
 handle = "in/yigal"
 url = "https://www.linkedin.com/in/yigal-chripun/"
 
-[[links]]
-icon = "x"
-label = "X"
-handle = "@yigal100"
-url = "https://x.com/yigal100"
+# [[links]]
+# icon = "x"
+# label = "X"
+# handle = "@yigal100"
+# url = "https://x.com/yigal100"
 
 [[links]]
 icon = "devdotto"
@@ -41,11 +41,11 @@ label = "Reading"
 handle = "ITNEXT"
 url = "https://itnext.io"
 
-[[links]]
-icon = "discord"
-label = "Discord"
-handle = "say hi"
-url = "https://discord.com"
+# [[links]]
+# icon = "discord"
+# label = "Discord"
+# handle = "say hi"
+# url = "https://discord.com"
 
 [[projects]]
 slug = "second-brain"
@@ -68,16 +68,6 @@ stack = "Rust · High Performance"
 desc = "Systems software exploring performance, concurrency, and modular architecture in Rust."
 
 [[projects]]
-slug = "quartz"
-name = "Quartz"
-url = "https://github.com/yigal100/quartz"
-tag = "DIGITAL GARDEN"
-tag_color = "magenta"
-stars = 0
-stack = "TypeScript · Quartz · Web"
-desc = "Digital garden publishing workflow rendering interconnected knowledge notes to the web."
-
-[[projects]]
 slug = "yigal100"
 name = "Profile Console"
 url = "https://github.com/yigal100/yigal100"
@@ -91,18 +81,27 @@ desc = "Dynamic terminal profile console displaying live GitHub stats, contribut
 category = "architecture"
 items = ["System Design", "Cloud Architecture", "Distributed Systems"]
 
-[[stack]]
-category = "cloud & aws"
-items = ["AWS", "Containers", "Serverless", "Event-Driven"]
-
-[[stack]]
-category = "languages"
-items = ["Rust", "TypeScript", "Python", "C#", "Go", "C++"]
 
 [[stack]]
 category = "practices"
-items = ["Continuous Learning", "Clean Code", "Design Patterns"]
+items = ["Agile", "Clean Code", "AI Native"]
 
 [[stack]]
-category = "tooling"
-items = ["Obsidian", "Git", "Docker", "Linux"]
+category = "cloud & devops"
+items = [
+  "AWS",
+  "Terraform",
+  "Databricks",
+  "Serverless",
+  "Event-Driven",
+  "Solace & Kafka",
+]
+
+[[stack]]
+category = "Data Engineering & Analytics"
+items = ["Streaming", "Data Lake", "ETL"]
+
+
+[[stack]]
+category = "languages"
+items = ["Rust", "Python", "C++", "TypeScript", "C#", "Java", "Go"]

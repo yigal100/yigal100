@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 #MISE description="Preview release notes and version calculation without creating commit or tag"
+#USAGE arg "[version]" help="Target version (e.g. 0.2.0); defaults to next bumped version"
 set -euo pipefail
 
-if [ -n "${1:-}" ]; then
-  VERSION="$1"
+VERSION_ARG="${usage_version:-${1:-}}"
+if [ -n "$VERSION_ARG" ]; then
+  VERSION="$VERSION_ARG"
 else
   VERSION="$(git-cliff --bumped-version 2>/dev/null || true)"
 fi

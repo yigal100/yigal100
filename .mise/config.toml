@@ -19,25 +19,47 @@ lockfile_auto_prune = true
 skills.prune = true
 skills.auto_sync = true
 
+[tasks.clean]
+description = "Remove generated SVG assets"
+run = "rm -rf assets"
+
 [tasks.fetch]
 description = "Fetch latest GitHub and DEV stats into data/*.json"
-run = "uv run profile fetch"
+usage = '''
+flag "--data <dir>" help="Folder to write stats.json, articles.json, and calendar.json"
+flag "--config <file>" help="Path to profile.toml"
+'''
+run = 'uv run profile fetch ${usage_data:+--data "$usage_data"} ${usage_config:+--config "$usage_config"}'
 
 [tasks.render]
 description = "Render profile SVGs from data/*.json"
-run = "uv run profile render"
+depends = ["clean"]
+usage = '''
+flag "--data <dir>" help="Folder with stats.json and articles.json"
+flag "--out <dir>" help="Folder to write the SVGs into"
+flag "--config <file>" help="Path to profile.toml"
+'''
+run = 'uv run profile render ${usage_data:+--data "$usage_data"} ${usage_out:+--out "$usage_out"} ${usage_config:+--config "$usage_config"}'
 
 [tasks.readme]
 description = "Synchronize dynamic README.md blocks"
-run = "uv run profile readme"
+usage = '''
+flag "--data <dir>" help="Folder with stats.json and articles.json"
+'''
+run = 'uv run profile readme ${usage_data:+--data "$usage_data"}'
 
 [tasks.update]
 description = "Render profile SVGs and synchronize README.md"
-run = ["mise run render", "mise run readme"]
+run = [{ task = "render" }, { task = "readme" }]
 
 [tasks.sync]
 description = "Fetch fresh data, render SVGs, and synchronize README.md"
-run = ["mise run fetch", "mise run update"]
+depends = ["fetch"]
+run = [{ task = "update" }]
+
+[tasks.check]
+description = "Run all code, markdown, and type checks"
+depends = ["lint", "lint:md", "typecheck"]
 
 [tasks.lint]
 description = "Lint Python code with ruff"
