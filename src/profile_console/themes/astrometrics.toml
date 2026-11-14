@@ -1,10 +1,15 @@
 # Astrometrics theme: Deep Space Observatory (dark) & Star Chart Paper (light)
 
 card_rx = 10
+card_style = "surface"
+prompt_style = "chevron"
+header_motif = "orbits"
+accent = "amber"
 grid_style = "dot"
 frame_style = "reticles"
 heading_style = "capsule"
 use_glow = true
+centerpiece = "orbital"
 centerpiece_stem = "orbital-chart"
 centerpiece_alt = "Orbital contribution chart: a 3D-perspective star chart of the last 365 days."
 kicker = "OBSERVATORY // IDENTITY LOG"

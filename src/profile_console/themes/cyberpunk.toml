@@ -1,10 +1,15 @@
 # Cyberpunk theme: Neon Console (dark) & Daylight Ice Deck (light)
 
 card_rx = 0
+card_style = "terminal"
+prompt_style = "shell"
+header_motif = "glitch"
+accent = "cyan"
 grid_style = "square"
 frame_style = "brackets"
 heading_style = "terminal"
 use_glow = true
+centerpiece = "city"
 centerpiece_stem = "contribution-city"
 centerpiece_alt = "Contribution city: an isometric skyline with one building per day of the last year."
 kicker = "SYS://TERMINAL"

@@ -11,7 +11,7 @@ def build_stack(stack: tuple[StackCategory, ...], theme: Theme) -> str:
     x0, cyan = theme.text_x, theme.cyan
     max_x = theme.frame_right - 36
     sec_title = theme.section_label("stack")
-    if theme.is_modern:
+    if theme.uses_chevron_prompt:
         sub = "systems & knowledge clusters" if theme.scifi_labels else "capabilities & tooling"
         parts = [
             heading(44, sec_title, "// 05", theme),
@@ -33,7 +33,7 @@ def build_stack(stack: tuple[StackCategory, ...], theme: Theme) -> str:
 
     for r, cat in enumerate(stack):
         parts.append(f'<g class="ln" style="animation-delay:{0.25 + r * 0.1:.2f}s">')
-        if theme.is_modern:
+        if theme.uses_surface_cards:
             parts.append(f'<circle cx="{x0 + 4}" cy="{y + 15}" r="3" fill="{theme.amber}"/>')
             parts.append(f'<text x="{x0 + 14}" y="{y + 20}" class="dim" style="font-size:12.5px">{esc(cat.category)}</text>')
             parts.append(
@@ -49,7 +49,7 @@ def build_stack(stack: tuple[StackCategory, ...], theme: Theme) -> str:
             if x > pills_x and x + w > max_x:
                 x = pills_x
                 y += wrap_h
-            if theme.is_modern:
+            if theme.uses_surface_cards:
                 parts.append(
                     f'<rect x="{x:.1f}" y="{y}" width="{w:.1f}" height="30" rx="{max(theme.card_rx - 2, 2)}" '
                     f'fill="{theme.surface}" stroke="{theme.border}" stroke-width="1"/>'

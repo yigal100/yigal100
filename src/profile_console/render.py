@@ -22,10 +22,10 @@ from profile_console.sections.writing import build_article_row, build_writing_he
 from profile_console.svg import Theme
 
 CENTERPIECE_BUILDERS = {
-    "astrometrics": ("orbital-chart", build_orbital),
-    "arcane-architect": ("contribution-terrain", build_terrain),
-    "studio": ("signal-spectrum", build_spectrum),
-    "cyberpunk": ("contribution-city", build_city),
+    "orbital": build_orbital,
+    "terrain": build_terrain,
+    "spectrum": build_spectrum,
+    "city": build_city,
 }
 
 
@@ -61,7 +61,8 @@ def _render_variant(
         )
     _write_svg(paths.assets_dir, name("stats"), build_stats(stats, cfg.profile, theme))
     if calendar is not None:
-        stem, builder = CENTERPIECE_BUILDERS[theme.preset]
+        stem = theme.spec["centerpiece_stem"]
+        builder = CENTERPIECE_BUILDERS[theme.spec["centerpiece"]]
         _write_svg(paths.assets_dir, name(stem), builder(calendar, stats["updated"], theme))
     _write_svg(paths.assets_dir, name("projects"), build_projects_head(theme))
     n_projects = len(cfg.projects)

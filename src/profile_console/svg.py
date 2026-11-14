@@ -38,10 +38,15 @@ class _Palette(TypedDict):
 
 class _ThemeSpec(TypedDict):
     card_rx: int
+    card_style: str
+    prompt_style: str
+    header_motif: str
+    accent: str
     grid_style: str
     frame_style: str
     heading_style: str
     use_glow: bool
+    centerpiece: str
     centerpiece_stem: str
     centerpiece_alt: str
     kicker: str
@@ -59,10 +64,15 @@ def _load_theme_toml(preset: str) -> tuple[_ThemeSpec, dict[str, _Palette]]:
     raw = tomllib.loads(path.read_text(encoding="utf-8"))
     spec: _ThemeSpec = {
         "card_rx": int(raw["card_rx"]),
+        "card_style": str(raw["card_style"]),
+        "prompt_style": str(raw["prompt_style"]),
+        "header_motif": str(raw["header_motif"]),
+        "accent": str(raw["accent"]),
         "grid_style": str(raw["grid_style"]),
         "frame_style": str(raw["frame_style"]),
         "heading_style": str(raw["heading_style"]),
         "use_glow": bool(raw["use_glow"]),
+        "centerpiece": str(raw["centerpiece"]),
         "centerpiece_stem": str(raw["centerpiece_stem"]),
         "centerpiece_alt": str(raw["centerpiece_alt"]),
         "kicker": str(raw["kicker"]),
@@ -145,25 +155,16 @@ class Theme:
         return spec
 
     @property
-    def is_astrometrics(self) -> bool:
-        return self.preset == "astrometrics"
+    def uses_surface_cards(self) -> bool:
+        return self.spec["card_style"] == "surface"
 
     @property
-    def is_arcane(self) -> bool:
-        return self.preset == "arcane-architect"
+    def uses_chevron_prompt(self) -> bool:
+        return self.spec["prompt_style"] == "chevron"
 
     @property
-    def is_studio(self) -> bool:
-        return self.preset == "studio"
-
-    @property
-    def is_cyberpunk(self) -> bool:
-        return self.preset == "cyberpunk"
-
-    @property
-    def is_modern(self) -> bool:
-        """True for all non-cyberpunk themes."""
-        return self.preset != "cyberpunk"
+    def accent_color(self) -> str:
+        return self.resolve_color(self.spec["accent"])
 
     @property
     def card_rx(self) -> int:

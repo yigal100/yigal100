@@ -1,10 +1,15 @@
 # Arcane Architect theme: Obsidian Vellum (dark) & Drafting Vellum (light)
 
 card_rx = 6
+card_style = "surface"
+prompt_style = "chevron"
+header_motif = "sigil"
+accent = "amber"
 grid_style = "blueprint"
 frame_style = "diamonds"
 heading_style = "diamond"
 use_glow = true
+centerpiece = "terrain"
 centerpiece_stem = "contribution-terrain"
 centerpiece_alt = "Contribution terrain: layered mountain ridgelines of the last 365 days."
 kicker = "CHARACTER SHEET // ARCHITECT"

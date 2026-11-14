@@ -37,7 +37,7 @@ def _build_modern_header(profile: ProfileInfo, theme: Theme) -> str:
     # Chaotic Good crest badge (top-right inside header body)
     bx, by, bw, bh = fr - 224, 78, 188, 64
     cx_em, cy_em = bx + 28, by + 32
-    crest_accent = cyan if theme.is_studio else amber
+    crest_accent = theme.accent_color
     crest = f'''<g class="ln" style="animation-delay:.35s">
 <rect x="{bx}" y="{by}" width="{bw}" height="{bh}" rx="{theme.card_rx}" fill="{theme.surface}" stroke="{crest_accent}" stroke-opacity=".6" stroke-width="1.2"/>
 <circle cx="{cx_em}" cy="{cy_em}" r="16" fill="{crest_accent}" fill-opacity=".12" stroke="{crest_accent}" stroke-opacity=".6" stroke-width="1"/>
@@ -47,33 +47,31 @@ def _build_modern_header(profile: ProfileInfo, theme: Theme) -> str:
 <text x="{bx + 54}" y="{by + 45}" font-weight="700" fill="{crest_accent}" letter-spacing=".8" style="font-size:13px">CHAOTIC GOOD</text>
 </g>'''
 
+    motif = theme.spec["header_motif"]
     bg_motif = ""
-    if theme.is_astrometrics:
+    if motif == "orbits":
         bg_motif = f'''<g opacity="{".25" if theme.is_light else ".32"}">
 <ellipse cx="{fr - 110}" cy="195" rx="180" ry="62" transform="rotate(-14 {fr - 110} 195)" fill="none" stroke="{cyan}" stroke-width="1" stroke-dasharray="4 5"/>
 <ellipse cx="{fr - 110}" cy="195" rx="125" ry="42" transform="rotate(-14 {fr - 110} 195)" fill="none" stroke="{violet}" stroke-width="1"/>
 <circle cx="{fr - 265}" cy="222" r="3" fill="{cyan}"/>
 <circle cx="{fr - 25}" cy="172" r="2.5" fill="{amber}"/>
 </g>'''
-        kicker = "OBSERVATORY // IDENTITY LOG" if theme.scifi_labels else "IDENTITY // PROFILE"
-        footer_status = "ORBIT NOMINAL · CONTINUOUS EXPLORATION" if theme.scifi_labels else "SYSTEMS NOMINAL · READY"
-    elif theme.is_arcane:
+    elif motif == "sigil":
         bg_motif = f'''<g opacity="{".22" if theme.is_light else ".28"}">
 <circle cx="{fr - 110}" cy="215" r="76" fill="none" stroke="{amber}" stroke-width="1" stroke-dasharray="3 4"/>
 <polygon points="{fr - 110},148 {fr - 52},248 {fr - 168},248" fill="none" stroke="{cyan}" stroke-width="1"/>
 </g>'''
-        kicker = "CHARACTER SHEET // ARCHITECT"
-        footer_status = "PROFICIENCY: SYSTEMS & CLOUD"
-    else:
+    elif motif == "bars":
         bg_motif = (
             f'<rect x="{fr - 72}" y="170" width="36" height="6" fill="{cyan}"/>'
             f'<rect x="{fr - 72}" y="182" width="24" height="6" fill="{theme.magenta}"/>'
         )
-        kicker = "00 // STUDIO SPEC SHEET"
-        footer_status = "CHAOTIC GOOD · BUILD & SHIP"
+
+    kicker = theme.spec["kicker"] if theme.scifi_labels else "IDENTITY // PROFILE"
+    footer_status = theme.spec["footer_status"] if theme.scifi_labels else "SYSTEMS NOMINAL · READY"
 
     text = bar_left + bar_right + kicker + name + "ALIGNMENTCHAOTIC GOOD" + "".join(lines) + profile.tagline_handle + footer_status
-    accent_bar = cyan if theme.is_studio else amber
+    accent_bar = theme.accent_color
 
     body = f'''<rect x="{fl}" y="{m}" width="{fr - fl}" height="34" fill="{theme.surface}"/>
 <line x1="{fl}" y1="{m + 34}" x2="{fr}" y2="{m + 34}" stroke="{theme.border}" stroke-width="1"/>
@@ -88,7 +86,7 @@ def _build_modern_header(profile: ProfileInfo, theme: Theme) -> str:
 {crest}
 {desc_lines}
 <g class="ln" style="animation-delay:.95s">
-<rect x="{x}" y="302" width="8" height="8" rx="{"1" if theme.is_studio else "4"}" fill="{green}"/>
+<rect x="{x}" y="302" width="8" height="8" rx="{"1" if theme.card_rx <= 2 else "4"}" fill="{green}"/>
 <text x="{x + 16}" y="310" letter-spacing="1.2" class="dim" style="font-size:11.5px">{esc(footer_status)}</text>
 </g>'''
     return slice_svg(
@@ -105,7 +103,7 @@ def _build_modern_header(profile: ProfileInfo, theme: Theme) -> str:
 
 def build_header(profile: ProfileInfo, theme: Theme) -> str:
     """Render the top console header with glitch name and bio lines."""
-    if theme.is_modern:
+    if theme.spec["header_motif"] != "glitch":
         return _build_modern_header(profile, theme)
     x, m, fl, fr = theme.text_x, theme.margin, theme.frame_left, theme.frame_right
     cyan, magenta, green = theme.cyan, theme.magenta, theme.green
@@ -177,23 +175,12 @@ def build_footer(profile: ProfileInfo, theme: Theme) -> str:
     """Render the bottom console footer slice."""
     x, fr, h = theme.text_x, theme.frame_right, 80
     handle = profile.handle
-    if theme.is_modern:
-        if theme.is_astrometrics:
-            msg = (
-                f"SECTOR // {handle.upper()} · END OF TRANSMISSION"
-                if theme.scifi_labels
-                else f"{handle} · end of transmission"
-            )
-            tag = "BOLDLY ARCHITECTING"
-        elif theme.is_arcane:
-            msg = f"{handle} · end of folio"
-            tag = "CHAOTIC GOOD"
-        else:
-            msg = f"{handle} // EOF"
-            tag = "CHAOTIC GOOD STUDIO"
+    if theme.uses_chevron_prompt:
+        msg = f"{handle} · {theme.spec['footer_status'].lower()}" if theme.scifi_labels else f"{handle} · end of transmission"
+        tag = theme.spec["footer_tag"]
         text = msg + tag
         body = (
-            f'<circle cx="{x + 4}" cy="38" r="3" fill="{theme.cyan if theme.is_studio else theme.amber}"/>'
+            f'<circle cx="{x + 4}" cy="38" r="3" fill="{theme.accent_color}"/>'
             f'<text x="{x + 16}" y="42" class="dim" style="font-size:12px">{esc(msg)}</text>'
             f'<text x="{fr - 36}" y="42" text-anchor="end" fill="{theme.muted}" style="font-size:11px">{esc(tag)}</text>'
         )

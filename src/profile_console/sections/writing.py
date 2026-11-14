@@ -11,7 +11,7 @@ BUBBLE = "M1.5 1.5h13v9h-7l-3.5 3v-3h-2.5z"
 def build_writing_head(theme: Theme) -> str:
     """Render the ~/writing section header."""
     sec_title = theme.section_label("writing")
-    if theme.is_modern:
+    if theme.uses_chevron_prompt:
         sub = "recent transmissions & insights" if theme.scifi_labels else "recommended reading & insights"
         body = (
             heading(44, sec_title, "// 06", theme)
@@ -57,7 +57,7 @@ def build_article_row(article: dict, index: int, theme: Theme) -> str:
     cx_icon = cx_num - 3 * 7.8 - 22  # fixed columns (room for 3 digits) so rows line up
     rx_num = cx_icon - 16
     rx_icon = rx_num - 3 * 7.8 - 22
-    if theme.is_modern:
+    if theme.uses_surface_cards:
         row_bg = (
             f'<rect x="{x - 10}" y="4" width="{rx - x + 20}" height="32" rx="{max(theme.card_rx - 2, 2)}" fill="{theme.surface}" stroke="{theme.border}" stroke-width=".8"/>'
             if index % 2 == 0
@@ -92,7 +92,7 @@ def build_article_row(article: dict, index: int, theme: Theme) -> str:
 def build_writing_more(theme: Theme) -> str:
     """Render the 'read articles & insights' link slice."""
     x, cyan = theme.text_x, theme.cyan
-    if theme.is_modern:
+    if theme.uses_chevron_prompt:
         body = f'''<g class="ln" style="animation-delay:.7s">
 <text x="{x}" y="26" style="font-size:13px"><tspan class="am">›</tspan><tspan class="cy"> read articles &amp; insights</tspan></text>
 <path d="M{x + 224} 26l8-8M{x + 226} 18h6v6" fill="none" stroke="{cyan}" stroke-width="1.5"/>

@@ -195,7 +195,7 @@ def _console_block(
         )
     lines.extend(
         [
-            _img_tag("footer", "100%", "End of transmission." if theme.is_modern else "Connection closed.", adaptive=adaptive),
+            _img_tag("footer", "100%", "End of transmission." if theme.uses_chevron_prompt else "Connection closed.", adaptive=adaptive),
             "</p>",
             "<!-- console:end -->",
         ]

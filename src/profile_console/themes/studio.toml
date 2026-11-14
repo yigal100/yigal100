@@ -1,10 +1,15 @@
 # Studio theme: Matte Carbon (dark) & Newsprint (light)
 
 card_rx = 2
+card_style = "surface"
+prompt_style = "chevron"
+header_motif = "bars"
+accent = "cyan"
 grid_style = "none"
 frame_style = "clean"
 heading_style = "block"
 use_glow = false
+centerpiece = "spectrum"
 centerpiece_stem = "signal-spectrum"
 centerpiece_alt = "Contribution spectrum: 52-week signal bars of the last 365 days."
 kicker = "00 // STUDIO SPEC SHEET"

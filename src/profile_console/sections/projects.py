@@ -13,7 +13,7 @@ CARD_H = 200
 def build_projects_head(theme: Theme) -> str:
     """Render the ~/projects section header."""
     sec_title = theme.section_label("projects")
-    if theme.is_modern:
+    if theme.uses_chevron_prompt:
         sub = "active mission dossiers" if theme.scifi_labels else "featured repositories"
         body = (
             heading(44, sec_title, "// 04", theme)
@@ -65,7 +65,7 @@ def build_card(
         f'<path transform="translate({sx - len(str(star_count)) * 7.2 - 20} 158) scale(.55)" '
         f'd="M10 0l2.9 6.6 7.1.6-5.4 4.7 1.6 7L10 15.2 3.8 18.9l1.6-7L0 7.2l7.1-.6z" fill="{theme.amber}"/>'
     )
-    if theme.is_modern:
+    if theme.uses_surface_cards:
         body = f'''<g class="ln" style="animation-delay:{delay:.2f}s">
 <rect x="{x0}" y="{y0}" width="{cw}" height="{ch}" rx="{theme.card_rx}" fill="{theme.surface}" stroke="{theme.border}" stroke-width="1"/>
 <rect x="{x0 + 14}" y="{y0}" width="56" height="3.5" rx="1.75" fill="{tag_color}"/>

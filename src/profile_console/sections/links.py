@@ -30,7 +30,7 @@ def build_links_head(profile: ProfileInfo, theme: Theme) -> str:
     """Render the ~/links section header."""
     x = theme.text_x
     sec_title = theme.section_label("links")
-    if theme.is_modern:
+    if theme.uses_chevron_prompt:
         sub = f"active relays · {profile.handle}" if theme.scifi_labels else f"channels · {profile.handle}"
         body = (
             heading(44, sec_title, "// 01", theme)
@@ -97,7 +97,7 @@ def build_link_button(
     )
     grid_def = theme.grid_pattern((-x0) % 40)
 
-    if theme.is_modern:
+    if theme.uses_chevron_prompt:
         conn_left = (
             f'<line x1="0" y1="{by + bh / 2}" x2="{lx:.1f}" y2="{by + bh / 2}" '
             f'stroke="{theme.border}" stroke-width="1.2" stroke-dasharray="3 3"/>'

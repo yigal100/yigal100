@@ -10,7 +10,7 @@ def build_reading_head(theme: Theme, section_num: int = 6) -> str:
     """Render the ~/reading section header."""
     num = f"// {section_num:02d}"
     sec_title = theme.section_label("reading")
-    if theme.is_modern:
+    if theme.uses_chevron_prompt:
         sub = "recommended reading & transmissions" if theme.scifi_labels else "recommended reading & references"
         body = (
             heading(44, sec_title, num, theme)
@@ -51,7 +51,7 @@ def build_reading_row(item: ReadingItem, index: int, theme: Theme) -> str:
     max_title = max(36, 72 - (len(source) + 3 if source else 0))
     shown = item.title if len(item.title) <= max_title else item.title[: max_title - 1].rstrip(" .,:;") + "…"
 
-    if theme.is_modern:
+    if theme.uses_surface_cards:
         row_bg = (
             f'<rect x="{x - 10}" y="4" width="{rx - x + 20}" height="32" rx="{max(theme.card_rx - 2, 2)}" '
             f'fill="{theme.surface}" stroke="{theme.border}" stroke-width=".8"/>'

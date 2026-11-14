@@ -26,7 +26,7 @@ def _tile(
 ) -> str:
     cyan = accent or theme.cyan
     vc = theme.muted if pending else cyan
-    if theme.is_modern:
+    if theme.uses_surface_cards:
         return f'''<g class="ln" style="animation-delay:{delay:.2f}s">
 <rect x="{x}" y="{y}" width="{w}" height="{h}" rx="{theme.card_rx}" fill="{theme.surface}" stroke="{theme.border}" stroke-width="1"/>
 <rect x="{x}" y="{y + 12}" width="4" height="{h - 24}" rx="2" fill="{cyan}"/>
@@ -56,7 +56,7 @@ def build_stats(d: dict, profile: ProfileInfo, theme: Theme) -> str:
     since = datetime.date.fromisoformat(d["created_at"][:10])
     yrs = (y - since).days // 365
     sec_title = theme.section_label("stats")
-    if theme.is_modern:
+    if theme.uses_chevron_prompt:
         sub_cmd = f"sensor array · {profile.handle}" if theme.scifi_labels else f"github telemetry · {profile.handle}"
         parts = [
             heading(44, sec_title, "// 02", theme),
@@ -95,7 +95,7 @@ def build_stats(d: dict, profile: ProfileInfo, theme: Theme) -> str:
         ("CURRENT STREAK", f"{d['streak_current']}d", f"longest: {d['streak_longest']} days", theme.green),
     ]
     for i, (lab, val, sub, acc) in enumerate(t1):
-        parts.append(_tile(x + i * (tw + gap), ty, tw, th, lab, val, sub, 0.25 + i * 0.08, theme, accent=acc if theme.is_modern else None))
+        parts.append(_tile(x + i * (tw + gap), ty, tw, th, lab, val, sub, 0.25 + i * 0.08, theme, accent=acc if theme.uses_surface_cards else None))
 
     # row 2 — neofetch list + languages
     ry, rh = ty + th + 16, 150
@@ -111,7 +111,7 @@ def build_stats(d: dict, profile: ProfileInfo, theme: Theme) -> str:
         f'<tspan class="fg">{esc(v)}</tspan></text>'
         for i, (k, v) in enumerate(kv)
     )
-    if theme.is_modern:
+    if theme.uses_surface_cards:
         parts.append(f'''<g class="ln" style="animation-delay:.6s">
 <rect x="{x}" y="{ry}" width="{lw}" height="{rh}" rx="{theme.card_rx}" fill="{theme.surface}" stroke="{theme.border}" stroke-width="1"/>
 <rect x="{x}" y="{ry + 14}" width="4" height="{rh - 28}" rx="2" fill="{theme.cyan}"/>
@@ -135,8 +135,8 @@ def build_stats(d: dict, profile: ProfileInfo, theme: Theme) -> str:
     segs, cx = [], bx
     for (_, p), c in zip(items, cols):
         w = bw * p
-        segs.append(f'<rect x="{cx:.1f}" y="{by}" width="{max(w - 2, 1):.1f}" height="8" rx="{"3" if theme.is_modern else "0"}" fill="{c}"/>')
-        if not theme.is_modern and not theme.is_light:
+        segs.append(f'<rect x="{cx:.1f}" y="{by}" width="{max(w - 2, 1):.1f}" height="8" rx="{"3" if theme.uses_surface_cards else "0"}" fill="{c}"/>')
+        if not theme.uses_surface_cards and not theme.is_light:
             segs.append(
                 f'<rect x="{cx:.1f}" y="{by}" width="{max(w - 2, 1):.1f}" height="8" fill="{c}" filter="url(#g)" opacity=".6"/>'
             )
@@ -147,11 +147,11 @@ def build_stats(d: dict, profile: ProfileInfo, theme: Theme) -> str:
         lxx = bx + col * (bw / 2)
         lyy = by + 36 + row * 26
         legend.append(
-            f'<rect x="{lxx}" y="{lyy - 9}" width="9" height="9" rx="{"2" if theme.is_modern else "0"}" fill="{c}"/>'
+            f'<rect x="{lxx}" y="{lyy - 9}" width="9" height="9" rx="{"2" if theme.uses_surface_cards else "0"}" fill="{c}"/>'
             f'<text x="{lxx + 18}" y="{lyy}" class="fg" style="font-size:13px">{esc(k)}</text>'
             f'<text x="{lxx + bw / 2 - 24}" y="{lyy}" text-anchor="end" class="dim" style="font-size:13px">{p * 100:.1f}%</text>'
         )
-    if theme.is_modern:
+    if theme.uses_surface_cards:
         parts.append(f'''<g class="ln" style="animation-delay:.7s">
 <rect x="{lx}" y="{ry}" width="{lwid}" height="{rh}" rx="{theme.card_rx}" fill="{theme.surface}" stroke="{theme.border}" stroke-width="1"/>
 <rect x="{lx}" y="{ry + 14}" width="4" height="{rh - 28}" rx="2" fill="{theme.violet}"/>
