@@ -864,7 +864,7 @@ def write(rel, svg):
     path.write_text(svg)
 
 
-def main(argv=None, data_dir=None, out_dir=None):
+def render_svgs(argv=None, data_dir=None, out_dir=None):
     global OUT
     if argv is not None:
         import argparse
@@ -900,4 +900,4 @@ def main(argv=None, data_dir=None, out_dir=None):
 
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    render_svgs(sys.argv[1:])

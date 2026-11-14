@@ -15,10 +15,6 @@ dependencies = [
 
 [project.scripts]
 profile = "profile_console.cli:main"
-profile-fetch = "profile_console.fetch:main"
-profile-render = "profile_console.render:main"
-profile-readme = "profile_console.readme:main"
-profile-update = "profile_console.cli:update"
 
 [build-system]
 requires = ["hatchling"]

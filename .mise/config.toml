@@ -19,17 +19,25 @@ lockfile_auto_prune = true
 skills.prune = true
 skills.auto_sync = true
 
-[tasks.render]
-description = "Render profile SVGs from data/*.json"
-run = "uv run profile render"
-
 [tasks.fetch]
 description = "Fetch latest GitHub and DEV stats into data/*.json"
 run = "uv run profile fetch"
 
+[tasks.render]
+description = "Render profile SVGs from data/*.json"
+run = "uv run profile render"
+
+[tasks.readme]
+description = "Synchronize dynamic README.md blocks"
+run = "uv run profile readme"
+
 [tasks.update]
 description = "Render profile SVGs and synchronize README.md"
-run = "uv run profile update"
+run = ["mise run render", "mise run readme"]
+
+[tasks.sync]
+description = "Fetch fresh data, render SVGs, and synchronize README.md"
+run = ["mise run fetch", "mise run update"]
 
 [tasks.lint]
 description = "Lint Python code with ruff"

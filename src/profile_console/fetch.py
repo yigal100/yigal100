@@ -254,7 +254,7 @@ def get_github_token():
 
 
 # ──────────────────────────────── main ─────────────────────────────────
-def main():
+def fetch_data():
     today = datetime.datetime.now(datetime.UTC).date()
     stats = load("stats.json", {})
     articles = load("articles.json", [])
@@ -298,4 +298,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    fetch_data()

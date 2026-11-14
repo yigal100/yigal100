@@ -5,9 +5,9 @@ from typing import Annotated
 
 import typer
 
-from profile_console.fetch import main as fetch_main
-from profile_console.readme import main as readme_main
-from profile_console.render import main as render_main
+from profile_console.fetch import fetch_data
+from profile_console.readme import update_readme
+from profile_console.render import render_svgs
 
 app = typer.Typer(
     name="profile",
@@ -20,7 +20,7 @@ app = typer.Typer(
 @app.command()
 def fetch() -> None:
     """Fetch latest stats into data/*.json."""
-    fetch_main()
+    fetch_data()
 
 
 @app.command()
@@ -35,33 +35,28 @@ def render(
     ] = None,
 ) -> None:
     """Render profile SVGs from data/*.json."""
-    render_main(data_dir=data, out_dir=out)
+    render_svgs(data_dir=data, out_dir=out)
 
 
 @app.command()
 def readme() -> None:
     """Synchronize dynamic README.md blocks."""
-    readme_main()
+    update_readme()
 
 
 @app.command()
 def update() -> None:
     """Render SVGs and synchronize README.md."""
-    render_main()
-    readme_main()
-
-
-def full_sync() -> None:
-    """Fetch fresh data, render SVGs, and synchronize README."""
-    fetch_main()
-    render_main()
-    readme_main()
+    render_svgs()
+    update_readme()
 
 
 @app.command()
 def sync() -> None:
     """Fetch fresh data, render SVGs, and synchronize README.md."""
-    full_sync()
+    fetch_data()
+    render_svgs()
+    update_readme()
 
 
 def main() -> None:

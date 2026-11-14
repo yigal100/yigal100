@@ -84,7 +84,7 @@ def city_alt(calendar):
     return html.escape(text + ".", quote=True)
 
 
-def main():
+def update_readme():
     stats = json.loads((DATA / "stats.json").read_text())
     articles = json.loads((DATA / "articles.json").read_text())
     s = README.read_text()
@@ -114,4 +114,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    update_readme()

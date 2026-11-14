@@ -11,6 +11,8 @@ on:
       - "src/profile_console/**"
       - "pyproject.toml"
       - "uv.lock"
+      - ".mise/config.toml"
+      - ".mise/mise.lock"
       - ".github/workflows/update-profile.yml"
 
 permissions:
@@ -27,23 +29,14 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - uses: astral-sh/setup-uv@v5
-        with:
-          enable-cache: true
-          python-version: "3.12"
+      - uses: jdx/mise-action@v5
 
-      - name: Fetch data
+      - name: Sync profile
         env:
           PROFILE_TOKEN: ${{ secrets.PROFILE_TOKEN }}   # optional: adds private contributions
           GITHUB_TOKEN: ${{ github.token }}             # fallback: public data only
           DEV_API_KEY: ${{ secrets.DEV_API_KEY }}       # optional: adds DEV views and followers
-        run: uv run profile fetch
-
-      - name: Render SVGs
-        run: uv run profile render
-
-      - name: Update README
-        run: uv run profile readme
+        run: mise run sync
 
       - name: Commit changes
         run: |
