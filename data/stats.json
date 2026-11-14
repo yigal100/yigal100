@@ -5,17 +5,17 @@
   "stars": 0,
   "forks": 0,
   "followers": 4,
-  "commits_year": 77,
-  "commits_all": 133,
-  "prs": 4,
-  "prs_merged": 4,
-  "streak_current": 2,
-  "streak_longest": 12,
+  "commits_year": 78,
+  "commits_all": 155,
+  "prs": 1057,
+  "prs_merged": 961,
+  "streak_current": 1,
+  "streak_longest": 5,
   "hackathon_wins": 0,
   "languages": {
     "TypeScript": 410603,
     "JavaScript": 121937,
-    "Python": 98707,
+    "Python": 103015,
     "C#": 30551,
     "SCSS": 25132,
     "Rust": 20897,
@@ -32,6 +32,6 @@
     "quartz": 0
   },
   "dev": {},
-  "contributions_year": 929,
-  "contributions_all": 3821
+  "contributions_year": 88,
+  "contributions_all": 215
 }
