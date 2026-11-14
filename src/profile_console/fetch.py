@@ -254,7 +254,8 @@ def get_github_token():
 
 
 # ──────────────────────────────── main ─────────────────────────────────
-def fetch_data():
+def fetch_data() -> None:
+    """Fetch latest stats into data/*.json."""
     today = datetime.datetime.now(datetime.UTC).date()
     stats = load("stats.json", {})
     articles = load("articles.json", [])

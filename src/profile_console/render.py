@@ -17,9 +17,10 @@ import json
 import math
 import pathlib
 import re
-import sys
 import textwrap
+from typing import Annotated
 
+import typer
 from fontTools import subset
 from fontTools.ttLib import TTFont
 
@@ -864,18 +865,20 @@ def write(rel, svg):
     path.write_text(svg)
 
 
-def render_svgs(argv=None, data_dir=None, out_dir=None):
+def render_svgs(
+    data: Annotated[
+        pathlib.Path | None,
+        typer.Option("--data", help="Folder with stats.json and articles.json"),
+    ] = None,
+    out: Annotated[
+        pathlib.Path | None,
+        typer.Option("--out", help="Folder to write the SVGs into"),
+    ] = None,
+) -> None:
+    """Render profile SVGs from data/*.json."""
     global OUT
-    if argv is not None:
-        import argparse
-
-        ap = argparse.ArgumentParser(description="Render the profile SVGs from data/*.json.")
-        ap.add_argument("--data", type=pathlib.Path, default=DATA, help="folder with stats.json and articles.json")
-        ap.add_argument("--out", type=pathlib.Path, default=OUT, help="folder to write the SVGs into")
-        args = ap.parse_args(argv)
-        data_dir, out_dir = args.data, args.out
-    data_dir = pathlib.Path(data_dir or DATA)
-    out_dir = pathlib.Path(out_dir or OUT)
+    data_dir = pathlib.Path(data or DATA)
+    out_dir = pathlib.Path(out or OUT)
     OUT = out_dir
     stats = json.load(open(data_dir / "stats.json"))
     articles = json.load(open(data_dir / "articles.json"))
@@ -900,4 +903,4 @@ def render_svgs(argv=None, data_dir=None, out_dir=None):
 
 
 if __name__ == "__main__":
-    render_svgs(sys.argv[1:])
+    typer.run(render_svgs)

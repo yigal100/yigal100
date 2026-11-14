@@ -84,7 +84,8 @@ def city_alt(calendar):
     return html.escape(text + ".", quote=True)
 
 
-def update_readme():
+def update_readme() -> None:
+    """Synchronize dynamic README.md blocks."""
     stats = json.loads((DATA / "stats.json").read_text())
     articles = json.loads((DATA / "articles.json").read_text())
     s = README.read_text()
