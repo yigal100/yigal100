@@ -8,10 +8,11 @@ from typing import Annotated
 
 import typer
 
-from profile_console.config import Paths, load_config
+from profile_console.config import Paths, ProfileConfig, load_config
 from profile_console.sections.city import build_city
 from profile_console.sections.header import build_footer, build_header
 from profile_console.sections.links import build_link_button, build_links_head
+from profile_console.sections.orbital import build_orbital
 from profile_console.sections.projects import build_card, build_projects_head
 from profile_console.sections.stack import build_stack
 from profile_console.sections.stats import build_stats
@@ -23,6 +24,53 @@ def _write_svg(out_dir: pathlib.Path, rel: str, svg: str) -> None:
     path = out_dir / rel
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(svg, encoding="utf-8")
+
+
+def _render_variant(
+    cfg: ProfileConfig,
+    paths: Paths,
+    stats: dict,
+    articles: list,
+    icons: dict[str, str],
+    calendar: list | None,
+    theme: Theme,
+    suffix: str = "",
+) -> None:
+    """Render all SVG slices for a single theme variant (optionally suffixed e.g. '-dark')."""
+    stars = stats.get("repo_stars", {})
+
+    def name(stem: str) -> str:
+        return f"{stem}{suffix}.svg"
+
+    _write_svg(paths.assets_dir, name("header"), build_header(cfg.profile, theme))
+    _write_svg(paths.assets_dir, name("links"), build_links_head(cfg.profile, theme))
+    for i, link in enumerate(cfg.links):
+        _write_svg(
+            paths.assets_dir,
+            name(f"links/{link.filename}"),
+            build_link_button(i, link, len(cfg.links), icons, theme),
+        )
+    _write_svg(paths.assets_dir, name("stats"), build_stats(stats, cfg.profile, theme))
+    if calendar is not None:
+        if theme.is_astrometrics:
+            _write_svg(paths.assets_dir, name("orbital-chart"), build_orbital(calendar, stats["updated"], theme))
+        else:
+            _write_svg(paths.assets_dir, name("contribution-city"), build_city(calendar, stats["updated"], theme))
+    _write_svg(paths.assets_dir, name("projects"), build_projects_head(theme))
+    n_projects = len(cfg.projects)
+    for i, project in enumerate(cfg.projects):
+        side = "F" if n_projects % 2 == 1 and i == n_projects - 1 else ("L" if i % 2 == 0 else "R")
+        _write_svg(
+            paths.assets_dir,
+            name(f"card-{project.slug}"),
+            build_card(project, side, 0.3 + i * 0.12, theme, stars),
+        )
+    _write_svg(paths.assets_dir, name("stack"), build_stack(cfg.stack, theme))
+    _write_svg(paths.assets_dir, name("writing"), build_writing_head(theme))
+    for i, article in enumerate(articles[:5]):
+        _write_svg(paths.assets_dir, name(f"writing/post-{i + 1}"), build_article_row(article, i, theme))
+    _write_svg(paths.assets_dir, name("writing/all-articles"), build_writing_more(theme))
+    _write_svg(paths.assets_dir, name("footer"), build_footer(cfg.profile, theme))
 
 
 def render_svgs(
@@ -42,41 +90,32 @@ def render_svgs(
     """Render profile SVGs from data/*.json."""
     paths = Paths.resolve(data_dir=data, out_dir=out, config_path=config)
     cfg = load_config(paths.config_path)
-    theme = Theme(fonts_dir=paths.fonts_dir)
 
     stats = json.loads((paths.data_dir / "stats.json").read_text(encoding="utf-8"))
     articles = json.loads((paths.data_dir / "articles.json").read_text(encoding="utf-8"))
     icons = json.loads(paths.icons_path.read_text(encoding="utf-8"))
-    stars = stats.get("repo_stars", {})
-
-    _write_svg(paths.assets_dir, "header.svg", build_header(cfg.profile, theme))
-    _write_svg(paths.assets_dir, "links.svg", build_links_head(cfg.profile, theme))
-    for i, link in enumerate(cfg.links):
-        _write_svg(
-            paths.assets_dir,
-            f"links/{link.filename}.svg",
-            build_link_button(i, link, len(cfg.links), icons, theme),
-        )
-    _write_svg(paths.assets_dir, "stats.svg", build_stats(stats, cfg.profile, theme))
     cal_file = paths.data_dir / "calendar.json"
-    if cal_file.exists():
-        calendar = json.loads(cal_file.read_text(encoding="utf-8"))
-        _write_svg(paths.assets_dir, "contribution-city.svg", build_city(calendar, stats["updated"], theme))
-    _write_svg(paths.assets_dir, "projects.svg", build_projects_head(theme))
-    n_projects = len(cfg.projects)
-    for i, project in enumerate(cfg.projects):
-        side = "F" if n_projects % 2 == 1 and i == n_projects - 1 else ("L" if i % 2 == 0 else "R")
-        _write_svg(
-            paths.assets_dir,
-            f"card-{project.slug}.svg",
-            build_card(project, side, 0.3 + i * 0.12, theme, stars),
+    calendar = json.loads(cal_file.read_text(encoding="utf-8")) if cal_file.exists() else None
+
+    if cfg.theme.name == "astrometrics" and cfg.theme.mode == "adaptive":
+        for variant in ("dark", "light"):
+            theme = Theme.from_preset(
+                cfg.theme.name,
+                variant,
+                scifi_labels=cfg.theme.scifi_labels,
+                fonts_dir=paths.fonts_dir,
+            )
+            _render_variant(cfg, paths, stats, articles, icons, calendar, theme, suffix=f"-{variant}")
+    else:
+        variant = "dark" if cfg.theme.name == "cyberpunk" else cfg.theme.mode
+        theme = Theme.from_preset(
+            cfg.theme.name,
+            variant,
+            scifi_labels=cfg.theme.scifi_labels,
+            fonts_dir=paths.fonts_dir,
         )
-    _write_svg(paths.assets_dir, "stack.svg", build_stack(cfg.stack, theme))
-    _write_svg(paths.assets_dir, "writing.svg", build_writing_head(theme))
-    for i, article in enumerate(articles[:5]):
-        _write_svg(paths.assets_dir, f"writing/post-{i + 1}.svg", build_article_row(article, i, theme))
-    _write_svg(paths.assets_dir, "writing/all-articles.svg", build_writing_more(theme))
-    _write_svg(paths.assets_dir, "footer.svg", build_footer(cfg.profile, theme))
+        _render_variant(cfg, paths, stats, articles, icons, calendar, theme)
+
     print("rendered", len(list(paths.assets_dir.rglob("*.svg"))), "SVGs into", paths.assets_dir)
 
 

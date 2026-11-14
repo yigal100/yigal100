@@ -10,11 +10,20 @@ def build_stack(stack: tuple[StackCategory, ...], theme: Theme) -> str:
     """Render the ~/stack section with dynamic category column width and pill wrapping."""
     x0, cyan = theme.text_x, theme.cyan
     max_x = theme.frame_right - 36
-    parts = [
-        heading(44, "stack", "// 05", theme),
-        f'<g class="ln" style="animation-delay:.15s"><text x="{x0}" y="96" class="dim">'
-        '<tspan class="gr">$</tspan> scan --loadout --top-level</text></g>',
-    ]
+    if theme.is_astrometrics:
+        sec_title = theme.section_label("stack", "loadout")
+        sub = "systems & knowledge clusters" if theme.scifi_labels else "capabilities & tooling"
+        parts = [
+            heading(44, sec_title, "// 05", theme),
+            f'<g class="ln" style="animation-delay:.15s"><text x="{x0}" y="96" class="dim">'
+            f'<tspan class="cy">›</tspan> {esc(sub)}</text></g>',
+        ]
+    else:
+        parts = [
+            heading(44, "stack", "// 05", theme),
+            f'<g class="ln" style="animation-delay:.15s"><text x="{x0}" y="96" class="dim">'
+            '<tspan class="gr">$</tspan> scan --loadout --top-level</text></g>',
+        ]
     y, rowh, wrap_h = 126, 44, 38
     cw = 0.6 * 13  # char advance at 13px
     max_cat_len = max((len(c.category) for c in stack), default=0)
@@ -24,23 +33,41 @@ def build_stack(stack: tuple[StackCategory, ...], theme: Theme) -> str:
 
     for r, cat in enumerate(stack):
         parts.append(f'<g class="ln" style="animation-delay:{0.25 + r * 0.1:.2f}s">')
-        parts.append(f'<text x="{x0}" y="{y + 20}" class="dim" style="font-size:13px">{esc(cat.category)}</text>')
-        parts.append(f'<text x="{arrow_x:.1f}" y="{y + 20}" class="cy" style="font-size:13px">›</text>')
+        if theme.is_astrometrics:
+            parts.append(f'<circle cx="{x0 + 4}" cy="{y + 15}" r="3" fill="{theme.amber}"/>')
+            parts.append(f'<text x="{x0 + 14}" y="{y + 20}" class="dim" style="font-size:12.5px">{esc(cat.category)}</text>')
+            parts.append(
+                f'<line x1="{arrow_x - 4:.1f}" y1="{y + 15}" x2="{pills_x - 4:.1f}" y2="{y + 15}" '
+                f'stroke="{theme.border}" stroke-width="1.2"/>'
+            )
+        else:
+            parts.append(f'<text x="{x0}" y="{y + 20}" class="dim" style="font-size:13px">{esc(cat.category)}</text>')
+            parts.append(f'<text x="{arrow_x:.1f}" y="{y + 20}" class="cy" style="font-size:13px">›</text>')
         x = pills_x
         for item in cat.items:
             w = len(item) * cw + 26
             if x > pills_x and x + w > max_x:
                 x = pills_x
                 y += wrap_h
-            parts.append(
-                f'<rect x="{x:.1f}" y="{y}" width="{w:.1f}" height="30" '
-                f'fill="{cyan}" fill-opacity=".06" stroke="{cyan}" stroke-opacity=".55"/>'
-            )
-            parts.append(f'<path d="M{x:.1f} {y + 8}V{y}H{x + 8:.1f}" fill="none" stroke="{cyan}" stroke-width="2"/>')
-            parts.append(
-                f'<text x="{x + 13:.1f}" y="{y + 20}" font-weight="700" class="cy" '
-                f'style="font-size:13px">{esc(item)}</text>'
-            )
+            if theme.is_astrometrics:
+                parts.append(
+                    f'<rect x="{x:.1f}" y="{y}" width="{w:.1f}" height="30" rx="6" '
+                    f'fill="{theme.surface}" stroke="{theme.border}" stroke-width="1"/>'
+                )
+                parts.append(
+                    f'<text x="{x + 13:.1f}" y="{y + 20}" font-weight="700" class="cy" '
+                    f'style="font-size:13px">{esc(item)}</text>'
+                )
+            else:
+                parts.append(
+                    f'<rect x="{x:.1f}" y="{y}" width="{w:.1f}" height="30" '
+                    f'fill="{cyan}" fill-opacity=".06" stroke="{cyan}" stroke-opacity=".55"/>'
+                )
+                parts.append(f'<path d="M{x:.1f} {y + 8}V{y}H{x + 8:.1f}" fill="none" stroke="{cyan}" stroke-width="2"/>')
+                parts.append(
+                    f'<text x="{x + 13:.1f}" y="{y + 20}" font-weight="700" class="cy" '
+                    f'style="font-size:13px">{esc(item)}</text>'
+                )
             x += w + 10
         parts.append("</g>")
         y += rowh

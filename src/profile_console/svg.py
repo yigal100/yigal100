@@ -18,8 +18,19 @@ PACKAGE_DIR = pathlib.Path(__file__).resolve().parent
 
 @dataclass(frozen=True)
 class Theme:
-    """Visual palette and slice layout constants for the cyberpunk console."""
+    """Visual palette and slice layout constants for profile console themes."""
 
+    preset: str = "cyberpunk"
+    variant: str = "dark"
+    scifi_labels: bool = False
+    bg: str = "#03040a"
+    surface: str = "#090d16"
+    surface_alt: str = "#11161d"
+    border: str = "#1e293b"
+    fg: str = "#c9d1d9"
+    wh: str = "#f0fbff"
+    dim: str = "#8b949e"
+    muted: str = "#484f58"
     cyan: str = "#00d9ff"
     magenta: str = "#ff2bd6"
     green: str = "#3fb950"
@@ -29,6 +40,78 @@ class Theme:
     margin: int = 16
     text_x: int = 52
     fonts_dir: pathlib.Path = PACKAGE_DIR / "fonts"
+
+    @classmethod
+    def from_preset(
+        cls,
+        preset: str = "cyberpunk",
+        variant: str = "dark",
+        *,
+        scifi_labels: bool = False,
+        fonts_dir: pathlib.Path | None = None,
+    ) -> Theme:
+        """Build a Theme from a named preset and light/dark variant."""
+        resolved_fonts = fonts_dir or (PACKAGE_DIR / "fonts")
+        if preset == "cyberpunk":
+            return cls(
+                preset="cyberpunk",
+                variant="dark",
+                scifi_labels=scifi_labels,
+                fonts_dir=resolved_fonts,
+            )
+        if preset == "astrometrics":
+            if variant == "light":
+                return cls(
+                    preset="astrometrics",
+                    variant="light",
+                    scifi_labels=scifi_labels,
+                    bg="#f8fafc",
+                    surface="#ffffff",
+                    surface_alt="#e2e8f0",
+                    border="#cbd5e1",
+                    fg="#1e293b",
+                    wh="#0f172a",
+                    dim="#475569",
+                    muted="#94a3b8",
+                    cyan="#0284c7",
+                    magenta="#db2777",
+                    green="#15803d",
+                    amber="#d97706",
+                    violet="#7c3aed",
+                    fonts_dir=resolved_fonts,
+                )
+            return cls(
+                preset="astrometrics",
+                variant="dark",
+                scifi_labels=scifi_labels,
+                bg="#090d16",
+                surface="#0f1624",
+                surface_alt="#162033",
+                border="#1e2d45",
+                fg="#e2e8f0",
+                wh="#f8fafc",
+                dim="#94a3b8",
+                muted="#64748b",
+                cyan="#38bdf8",
+                magenta="#f472b6",
+                green="#4ade80",
+                amber="#fbbf24",
+                violet="#a78bfa",
+                fonts_dir=resolved_fonts,
+            )
+        raise ValueError(f"Unknown theme preset: {preset!r}")
+
+    @property
+    def is_astrometrics(self) -> bool:
+        return self.preset == "astrometrics"
+
+    @property
+    def is_light(self) -> bool:
+        return self.variant == "light"
+
+    def section_label(self, standard: str, scifi: str) -> str:
+        """Return opt-in sci-fi section label when enabled, otherwise standard label."""
+        return scifi if self.scifi_labels else standard
 
     @property
     def frame_left(self) -> int:
@@ -56,8 +139,8 @@ class Theme:
     def base_css(self) -> str:
         return (
             f"text{{font-family:'JBM',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:15px}}\n"
-            f".dim{{fill:#8b949e}}.cy{{fill:{self.cyan}}}.fg{{fill:#c9d1d9}}"
-            f".gr{{fill:{self.green}}}.wh{{fill:#f0fbff}}\n"
+            f".dim{{fill:{self.dim}}}.cy{{fill:{self.cyan}}}.fg{{fill:{self.fg}}}"
+            f".gr{{fill:{self.green}}}.wh{{fill:{self.wh}}}.am{{fill:{self.amber}}}.vi{{fill:{self.violet}}}\n"
             "@keyframes fadein{from{opacity:0;transform:translateX(-6px)}to{opacity:1;transform:none}}\n"
             "@keyframes blink{0%,49%{opacity:1}50%,100%{opacity:0}}\n"
             "@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}\n"
@@ -68,6 +151,16 @@ class Theme:
 
     @property
     def base_defs(self) -> str:
+        if self.is_astrometrics:
+            dot_op = ".12" if self.is_light else ".14"
+            grid_op = ".06" if self.is_light else ".045"
+            return (
+                f'<pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">'
+                f'<path d="M40 0H0V40" fill="none" stroke="{self.cyan}" stroke-opacity="{grid_op}"/>'
+                f'<circle cx="0" cy="0" r="1" fill="{self.cyan}" fill-opacity="{dot_op}"/></pattern>\n'
+                '<filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="4"/></filter>\n'
+                '<filter id="g" x="-20%" y="-60%" width="140%" height="220%"><feGaussianBlur stdDeviation="2.5"/></filter>'
+            )
         return (
             f'<pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">'
             f'<path d="M40 0H0V40" fill="none" stroke="{self.cyan}" stroke-opacity=".06"/></pattern>\n'
@@ -151,14 +244,37 @@ def slice_svg(
         + (f"M{fl} {y1}H{fr}" if bottom else "")
     )
     corners = ""
-    if top:
-        corners += (
-            f'<path d="M{fl - 7} {y0 + 18}V{y0 - 7}H{fl + 18}"/><path d="M{fr - 18} {y0 - 7}H{fr + 7}V{y0 + 18}"/>'
+    if theme.is_astrometrics:
+        if top:
+            corners += (
+                f'<circle cx="{fl}" cy="{y0}" r="3.5" fill="{theme.amber}"/>'
+                f'<circle cx="{fr}" cy="{y0}" r="3.5" fill="{theme.cyan}"/>'
+                f'<path d="M{fl + 8} {y0 - 4}H{fl + 24}M{fr - 24} {y0 - 4}H{fr - 8}" stroke="{theme.dim}" stroke-width="1"/>'
+            )
+        if bottom:
+            corners += (
+                f'<circle cx="{fl}" cy="{y1}" r="3.5" fill="{theme.cyan}"/>'
+                f'<circle cx="{fr}" cy="{y1}" r="3.5" fill="{theme.amber}"/>'
+            )
+        rail_color = theme.border if theme.is_light else theme.cyan
+        rail_op = "1" if theme.is_light else ".45"
+        glow_markup = (
+            ""
+            if theme.is_light
+            else f'<path d="{glow}" fill="none" stroke="{theme.cyan}" stroke-width="2" opacity=".25" filter="url(#glow)"/>\n'
         )
-    if bottom:
-        corners += (
-            f'<path d="M{fl - 7} {y1 - 18}V{y1 + 7}H{fl + 18}"/><path d="M{fr - 18} {y1 + 7}H{fr + 7}V{y1 - 18}"/>'
-        )
+        rail_markup = f'<path d="{rails}" fill="none" stroke="{rail_color}" stroke-opacity="{rail_op}" stroke-width="1.2"/>\n<g>{corners}</g>'
+    else:
+        if top:
+            corners += (
+                f'<path d="M{fl - 7} {y0 + 18}V{y0 - 7}H{fl + 18}"/><path d="M{fr - 18} {y0 - 7}H{fr + 7}V{y0 + 18}"/>'
+            )
+        if bottom:
+            corners += (
+                f'<path d="M{fl - 7} {y1 - 18}V{y1 + 7}H{fl + 18}"/><path d="M{fr - 18} {y1 + 7}H{fr + 7}V{y1 - 18}"/>'
+            )
+        glow_markup = f'<path d="{glow}" fill="none" stroke="{theme.cyan}" stroke-width="3" opacity=".55" filter="url(#glow)"/>\n'
+        rail_markup = f'<path d="{rails}" fill="none" stroke="{theme.cyan}" stroke-width="1.2"/>\n<g fill="none" stroke="{theme.cyan}" stroke-width="2">{corners}</g>'
     return f'''<svg xmlns="http://www.w3.org/2000/svg" width="{w}" height="{h}" viewBox="0 0 {w} {h}" role="img" aria-labelledby="t d">
 <title id="t">{esc(title)}</title>
 <desc id="d">{esc(desc)}</desc>
@@ -172,12 +288,10 @@ def slice_svg(
 {theme.base_defs}
 {defs}
 </defs>
-<path d="{glow}" fill="none" stroke="{theme.cyan}" stroke-width="3" opacity=".55" filter="url(#glow)"/>
-<rect x="{fl}" y="{y0}" width="{fr - fl}" height="{y1 - y0}" fill="#03040a"/>
+{glow_markup}<rect x="{fl}" y="{y0}" width="{fr - fl}" height="{y1 - y0}" fill="{theme.bg}"/>
 <rect x="{fl}" y="{y0}" width="{fr - fl}" height="{y1 - y0}" fill="url(#grid)"/>
 {body}
-<path d="{rails}" fill="none" stroke="{theme.cyan}" stroke-width="1.2"/>
-<g fill="none" stroke="{theme.cyan}" stroke-width="2">{corners}</g>
+{rail_markup}
 </svg>
 '''
 
@@ -198,6 +312,18 @@ def half_slice(
     hw, m, fl = theme.half_width, theme.margin, theme.frame_left
     rx = fl if side == "L" else hw - m
     bx0, bx1 = (fl, hw) if side == "L" else (0, hw - m)
+    if theme.is_astrometrics:
+        rail_color = theme.border if theme.is_light else theme.cyan
+        rail_op = "1" if theme.is_light else ".45"
+        glow_markup = (
+            ""
+            if theme.is_light
+            else f'<path d="M{rx} -40V{h + 40}" fill="none" stroke="{theme.cyan}" stroke-width="2" opacity=".25" filter="url(#glow)"/>\n'
+        )
+        rail_markup = f'<path d="M{rx} 0V{h}" fill="none" stroke="{rail_color}" stroke-opacity="{rail_op}" stroke-width="1.2"/>'
+    else:
+        glow_markup = f'<path d="M{rx} -40V{h + 40}" fill="none" stroke="{theme.cyan}" stroke-width="3" opacity=".55" filter="url(#glow)"/>\n'
+        rail_markup = f'<path d="M{rx} 0V{h}" fill="none" stroke="{theme.cyan}" stroke-width="1.2"/>'
     return f'''<svg xmlns="http://www.w3.org/2000/svg" width="{hw}" height="{h}" viewBox="0 0 {hw} {h}" role="img" aria-labelledby="t d">
 <title id="t">{esc(title)}</title>
 <desc id="d">{esc(desc)}</desc>
@@ -209,11 +335,10 @@ def half_slice(
 <defs>
 {theme.base_defs}
 </defs>
-<path d="M{rx} -40V{h + 40}" fill="none" stroke="{theme.cyan}" stroke-width="3" opacity=".55" filter="url(#glow)"/>
-<rect x="{bx0}" y="0" width="{bx1 - bx0}" height="{h}" fill="#03040a"/>
+{glow_markup}<rect x="{bx0}" y="0" width="{bx1 - bx0}" height="{h}" fill="{theme.bg}"/>
 <rect x="{bx0}" y="0" width="{bx1 - bx0}" height="{h}" fill="url(#grid)"/>
 {body}
-<path d="M{rx} 0V{h}" fill="none" stroke="{theme.cyan}" stroke-width="1.2"/>
+{rail_markup}
 </svg>
 '''
 
@@ -221,6 +346,17 @@ def half_slice(
 def heading(y: int, name: str, counter: str, theme: Theme) -> str:
     """Render a section heading bar with counter."""
     x, fr, cyan = theme.text_x, theme.frame_right, theme.cyan
+    if theme.is_astrometrics:
+        idx = counter.replace("/", "").strip()
+        pill_w = 34
+        return (
+            f'<rect x="{x}" y="{y - 16}" width="{pill_w}" height="18" rx="9" fill="{theme.amber}" fill-opacity=".18" stroke="{theme.amber}" stroke-opacity=".7"/>'
+            f'<text x="{x + pill_w / 2}" y="{y - 3}" text-anchor="middle" font-weight="700" fill="{theme.amber}" style="font-size:11px">{esc(idx)}</text>'
+            f'<circle cx="{x + pill_w + 14}" cy="{y - 7}" r="3.5" fill="{cyan}"/>'
+            f'<text x="{x + pill_w + 26}" y="{y}" font-weight="700" letter-spacing="1.2" class="wh" style="font-size:18px">{esc(name.upper())}</text>'
+            f'<line x1="{x}" y1="{y + 14}" x2="{fr - 36}" y2="{y + 14}" stroke="{theme.border}" stroke-width="1"/>'
+            f'<line x1="{x}" y1="{y + 14}" x2="{x + 110}" y2="{y + 14}" stroke="{cyan}" stroke-width="2.5" stroke-linecap="round"/>'
+        )
     return f'''<text x="{x}" y="{y}" font-weight="700" fill="{cyan}" filter="url(#g)" opacity=".8" style="font-size:20px">~/</text>
 <text x="{x}" y="{y}" font-weight="700" style="font-size:20px"><tspan class="cy">~/</tspan><tspan class="wh">{esc(name)}</tspan></text>
 <text x="{fr - 36}" y="{y}" text-anchor="end" letter-spacing="2" fill="#6e7681" style="font-size:12px">{esc(counter)}</text>

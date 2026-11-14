@@ -6,8 +6,108 @@ from profile_console.config import ProfileInfo
 from profile_console.svg import Theme, esc, slice_svg, stagger
 
 
+def _build_astro_header(profile: ProfileInfo, theme: Theme) -> str:
+    """Render the astrometrics observatory header with Chaotic Good crest and orbital accent."""
+    x, m, fl, fr = theme.text_x, theme.margin, theme.frame_left, theme.frame_right
+    cyan, amber, green, violet = theme.cyan, theme.amber, theme.green, theme.violet
+    bar_left = profile.node_label
+    bar_right = profile.status_label
+    name = profile.name
+    lines = profile.bio
+    h = 360
+
+    dotx = fr - 20 - len(bar_right) * 7.6 - 14
+    rows: list[str | None] = [
+        f'<text class="fg" x="{x + 14}" y="{{y}}"><circle cx="{x + 4}" cy="{{y - 5}}" r="2.5" fill="{cyan}"/>{esc(line)}</text>'
+        for line in lines[:-1]
+    ]
+    # Note: SVG <text> cannot contain <circle>; render node dot as sibling inside stagger row
+    rows = [
+        f'<circle cx="{x + 4}" cy="{{y - 5}}" r="2.8" fill="{cyan}"/><text class="fg" x="{x + 16}" y="{{y}}">{esc(line)}</text>'
+        for line in lines[:-1]
+    ]
+    if lines:
+        rows.append(
+            f'<circle cx="{x + 4}" cy="{{y - 5}}" r="2.8" fill="{amber}"/>'
+            f'<text class="fg" x="{x + 16}" y="{{y}}">{esc(lines[-1])}'
+            f'<tspan class="cy" font-weight="700">{esc(profile.tagline_handle)}</tspan></text>'
+        )
+    # Replace {y - 5} arithmetic cleanly
+    clean_rows: list[str | None] = []
+    for idx, line in enumerate(lines):
+        is_last = idx == len(lines) - 1
+        dot_color = amber if is_last else cyan
+        suffix = f'<tspan class="cy" font-weight="700">{esc(profile.tagline_handle)}</tspan>' if is_last else ""
+        clean_rows.append(
+            f'<circle cx="{x + 4}" cy="{{y_dot}}" r="2.8" fill="{dot_color}"/>'
+            f'<text class="fg" x="{x + 16}" y="{{y}}">{esc(line)}{suffix}</text>'
+        )
+    desc_parts = []
+    y_cur = 216
+    for idx, r in enumerate(clean_rows):
+        if r is None:
+            continue
+        rendered = r.replace("{y}", str(y_cur)).replace("{y_dot}", str(y_cur - 5))
+        desc_parts.append(f'<g class="ln" style="animation-delay:{0.45 + idx * 0.14:.2f}s">{rendered}</g>')
+        y_cur += 26
+    desc_lines = "\n".join(desc_parts)
+
+    # Chaotic Good geometric crest badge (top-right inside header body)
+    bx, by, bw, bh = fr - 224, 78, 188, 64
+    cx_em, cy_em = bx + 28, by + 32
+    crest = f'''<g class="ln" style="animation-delay:.35s">
+<rect x="{bx}" y="{by}" width="{bw}" height="{bh}" rx="10" fill="{theme.surface}" stroke="{amber}" stroke-opacity=".55" stroke-width="1.2"/>
+<circle cx="{cx_em}" cy="{cy_em}" r="16" fill="{amber}" fill-opacity=".12" stroke="{amber}" stroke-opacity=".6" stroke-width="1"/>
+<path d="M{cx_em} {cy_em - 11}L{cx_em + 4} {cy_em - 3}L{cx_em + 11} {cy_em}L{cx_em + 4} {cy_em + 3}L{cx_em} {cy_em + 11}L{cx_em - 4} {cy_em + 3}L{cx_em - 11} {cy_em}L{cx_em - 4} {cy_em - 3}Z" fill="{amber}"/>
+<circle cx="{cx_em}" cy="{cy_em}" r="2.5" fill="{theme.surface}"/>
+<text x="{bx + 54}" y="{by + 25}" letter-spacing="1.2" class="dim" style="font-size:9.5px">ALIGNMENT</text>
+<text x="{bx + 54}" y="{by + 45}" font-weight="700" fill="{amber}" letter-spacing=".8" style="font-size:13px">CHAOTIC GOOD</text>
+</g>'''
+
+    # Subtle orbital arc motif in top-right background
+    orbit_bg = f'''<g opacity="{".25" if theme.is_light else ".32"}">
+<ellipse cx="{fr - 110}" cy="195" rx="180" ry="62" transform="rotate(-14 {fr - 110} 195)" fill="none" stroke="{cyan}" stroke-width="1" stroke-dasharray="4 5"/>
+<ellipse cx="{fr - 110}" cy="195" rx="125" ry="42" transform="rotate(-14 {fr - 110} 195)" fill="none" stroke="{violet}" stroke-width="1"/>
+<circle cx="{fr - 265}" cy="222" r="3" fill="{cyan}"/>
+<circle cx="{fr - 25}" cy="172" r="2.5" fill="{amber}"/>
+</g>'''
+
+    kicker = "OBSERVATORY // IDENTITY LOG" if theme.scifi_labels else "IDENTITY // PROFILE"
+    footer_status = "ORBIT NOMINAL · CONTINUOUS EXPLORATION" if theme.scifi_labels else "SYSTEMS NOMINAL · READY"
+    text = bar_left + bar_right + kicker + name + "ALIGNMENTCHAOTIC GOOD" + "".join(lines) + profile.tagline_handle + footer_status
+
+    body = f'''<rect x="{fl}" y="{m}" width="{fr - fl}" height="34" fill="{theme.surface}"/>
+<line x1="{fl}" y1="{m + 34}" x2="{fr}" y2="{m + 34}" stroke="{theme.border}" stroke-width="1"/>
+<rect x="{fl}" y="{m}" width="6" height="34" fill="{amber}"/>
+<text x="{fl + 18}" y="{m + 22}" letter-spacing="1" class="cy" style="font-size:12px">{esc(bar_left)}</text>
+<text x="{fr - 20}" y="{m + 22}" letter-spacing="1" class="dim" text-anchor="end" style="font-size:12px">{esc(bar_right)}</text>
+<circle class="dot" cx="{dotx}" cy="{m + 18}" r="4" fill="{green}"/>
+{orbit_bg}
+<text x="{x}" y="96" letter-spacing="1.8" class="cy" style="font-size:11px">{esc(kicker)}</text>
+<text x="{x}" y="162" font-weight="800" letter-spacing="1.5" class="wh" style="font-size:48px">{esc(name)}</text>
+<line x1="{x}" y1="180" x2="{x + 140}" y2="180" stroke="{amber}" stroke-width="2.5" stroke-linecap="round"/>
+{crest}
+{desc_lines}
+<g class="ln" style="animation-delay:.95s">
+<rect x="{x}" y="302" width="8" height="8" rx="4" fill="{green}"/>
+<text x="{x + 16}" y="310" letter-spacing="1.2" class="dim" style="font-size:11.5px">{esc(footer_status)}</text>
+</g>'''
+    return slice_svg(
+        h,
+        body,
+        title=profile.header_title,
+        desc=profile.header_desc,
+        text=text,
+        theme=theme,
+        top=True,
+        weights=(400, 700, 800),
+    )
+
+
 def build_header(profile: ProfileInfo, theme: Theme) -> str:
     """Render the top console header with glitch name and bio lines."""
+    if theme.is_astrometrics:
+        return _build_astro_header(profile, theme)
     x, m, fl, fr = theme.text_x, theme.margin, theme.frame_left, theme.frame_right
     cyan, magenta, green = theme.cyan, theme.magenta, theme.green
     bar_left, bar_right = profile.node_label, profile.status_label
@@ -73,8 +173,21 @@ def build_header(profile: ProfileInfo, theme: Theme) -> str:
 
 def build_footer(profile: ProfileInfo, theme: Theme) -> str:
     """Render the bottom console footer slice."""
-    x, h = theme.text_x, 80
+    x, fr, h = theme.text_x, theme.frame_right, 80
     handle = profile.handle
+    if theme.is_astrometrics:
+        msg = (
+            f"SECTOR // {handle.upper()} · END OF TRANSMISSION"
+            if theme.scifi_labels
+            else f"{handle} · end of transmission"
+        )
+        text = msg + "BOLDLY ARCHITECTING"
+        body = (
+            f'<circle cx="{x + 4}" cy="38" r="3" fill="{theme.amber}"/>'
+            f'<text x="{x + 16}" y="42" class="dim" style="font-size:12px">{esc(msg)}</text>'
+            f'<text x="{fr - 36}" y="42" text-anchor="end" fill="{theme.muted}" style="font-size:11px">BOLDLY ARCHITECTING</text>'
+        )
+        return slice_svg(h, body, title="End of profile", desc="End of transmission.", text=text, theme=theme, bottom=True)
     text = f"$ exit connection to {handle} closed. // EOF"
     body = f'''<text x="{x}" y="30" class="dim"><tspan class="gr">$</tspan> exit</text>
 <text x="{x}" y="52" class="dim">connection to <tspan class="cy">{esc(handle)}</tspan> closed. <tspan fill="#484f58">// EOF</tspan></text>'''

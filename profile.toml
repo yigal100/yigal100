@@ -1,3 +1,8 @@
+[theme]
+name = "astrometrics"   # "astrometrics" | "cyberpunk"
+mode = "adaptive"       # "dark" | "light" | "adaptive"
+scifi_labels = true    # true for SECTOR / TELEMETRY / MISSIONS / LOADOUT labels
+
 [profile]
 github_user = "yigal100"
 dev_user = ""

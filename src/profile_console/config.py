@@ -130,10 +130,36 @@ class StackCategory:
 
 
 @dataclass(frozen=True)
+class ThemeConfig:
+    """Theme preset, color mode, and optional UI label style."""
+
+    name: str = "cyberpunk"
+    mode: str = "dark"
+    scifi_labels: bool = False
+
+    @classmethod
+    def from_dict(cls, raw: dict | None) -> ThemeConfig:
+        if not raw:
+            return cls()
+        name = str(raw.get("name", "cyberpunk")).lower()
+        mode = str(raw.get("mode", "dark")).lower()
+        if name not in {"cyberpunk", "astrometrics"}:
+            raise ValueError(f"Unknown theme name {name!r}; expected 'cyberpunk' or 'astrometrics'")
+        if mode not in {"dark", "light", "adaptive"}:
+            raise ValueError(f"Unknown theme mode {mode!r}; expected 'dark', 'light', or 'adaptive'")
+        return cls(
+            name=name,
+            mode=mode,
+            scifi_labels=bool(raw.get("scifi_labels", False)),
+        )
+
+
+@dataclass(frozen=True)
 class ProfileConfig:
     """Top-level configuration loaded from profile.toml."""
 
     profile: ProfileInfo
+    theme: ThemeConfig
     links: tuple[LinkItem, ...]
     projects: tuple[ProjectItem, ...]
     stack: tuple[StackCategory, ...]
@@ -162,6 +188,7 @@ def load_config(config_path: pathlib.Path | None = None) -> ProfileConfig:
     )
     return ProfileConfig(
         profile=profile,
+        theme=ThemeConfig.from_dict(raw.get("theme")),
         links=tuple(LinkItem.from_dict(item) for item in raw.get("links", [])),
         projects=tuple(ProjectItem.from_dict(item) for item in raw.get("projects", [])),
         stack=tuple(StackCategory.from_dict(item) for item in raw.get("stack", [])),
