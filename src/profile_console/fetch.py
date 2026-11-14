@@ -288,7 +288,6 @@ def fetch_data(
     if not ok:
         print("error: every source failed, nothing updated", file=sys.stderr)
         sys.exit(1)
-    stats["hackathon_wins"] = cfg.profile.hackathon_wins
     stats["updated"] = today.isoformat()
     _save_json(paths.data_dir, "stats.json", stats)
     _save_json(paths.data_dir, "articles.json", articles)

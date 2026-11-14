@@ -1,8 +1,9 @@
-"""Updates the dynamic parts of README.md from data/*.json.
+"""Updates the dynamic parts of README.md from data/*.json and profile.toml.
 
+- the links row between <!-- links:start --> and <!-- links:end -->
+- the project cards between <!-- projects:start --> and <!-- projects:end -->
 - the latest-articles block between <!-- writing:start --> and <!-- writing:end -->
-  (links + alt text; the images themselves come from render.py)
-- the alt text of the stats image, so screen readers get today's numbers
+- the alt text of the stats and contribution-city images
 
 Everything else in the README is left exactly as it is.
 """
@@ -19,7 +20,46 @@ from typing import Annotated
 
 import typer
 
-from profile_console.config import Paths
+from profile_console.config import LinkItem, Paths, ProjectItem, load_config
+from profile_console.sections.links import link_slice_bounds
+from profile_console.svg import Theme
+
+
+def links_block(links: tuple[LinkItem, ...], total_width: int) -> str:
+    """Build the clickable links row matching the rendered link slice widths."""
+    n = len(links)
+    tags = []
+    for i, link in enumerate(links):
+        _, seg = link_slice_bounds(i, n, total_width)
+        pct = seg / total_width * 100
+        width = f"{pct:g}%" if pct.is_integer() else f"{pct:.4f}%"
+        tags.append(
+            f'<a href="{html.escape(link.url, quote=True)}"><img src="./assets/links/{link.filename}.svg" '
+            f'width="{width}" align="top" alt="{html.escape(link.label, quote=True)}"></a>'
+        )
+    return "<!-- links:start -->\n" + "".join(tags) + "\n<!-- links:end -->"
+
+
+def projects_block(projects: tuple[ProjectItem, ...]) -> str:
+    """Build the project cards grid (2-up rows, with full-width final card if odd)."""
+    n = len(projects)
+    rows = []
+    for i in range(0, n, 2):
+        pair = projects[i : i + 2]
+        if len(pair) == 2:
+            line = "".join(
+                f'<a href="{html.escape(p.url, quote=True)}"><img src="./assets/card-{p.slug}.svg" '
+                f'width="50%" align="top" alt="{html.escape(p.name, quote=True)} — {html.escape(p.desc, quote=True)}"></a>'
+                for p in pair
+            )
+        else:
+            p = pair[0]
+            line = (
+                f'<a href="{html.escape(p.url, quote=True)}"><img src="./assets/card-{p.slug}.svg" '
+                f'width="100%" align="top" alt="{html.escape(p.name, quote=True)} — {html.escape(p.desc, quote=True)}"></a>'
+            )
+        rows.append(line)
+    return "<!-- projects:start -->\n" + "\n".join(rows) + "\n<!-- projects:end -->"
 
 
 def writing_block(articles: list[dict]) -> str:
@@ -57,7 +97,6 @@ def stats_alt(d: dict) -> str:
         f"{d['followers']} followers",
         f"{d['forks']} forks",
         f"member since {since:%B %Y}",
-        f"{d['hackathon_wins']} hackathon wins",
     ]
     text = "Stats: " + "; ".join(parts) + ". Top languages: " + ", ".join(k for k, _ in langs) + "."
     dev = {k: v for k, v in (d.get("dev") or {}).items() if v is not None}
@@ -80,6 +119,18 @@ def city_alt(calendar: list[list]) -> str:
     return html.escape(text + ".", quote=True)
 
 
+def _replace_block(content: str, name: str, replacement: str) -> str:
+    updated, n = re.subn(
+        rf"<!-- {name}:start -->.*?<!-- {name}:end -->",
+        lambda _: replacement,
+        content,
+        flags=re.DOTALL,
+    )
+    if n != 1:
+        sys.exit(f"error: README needs exactly one <!-- {name}:start --> … <!-- {name}:end --> block")
+    return updated
+
+
 def update_readme(
     data: Annotated[
         pathlib.Path | None,
@@ -88,15 +139,15 @@ def update_readme(
 ) -> None:
     """Synchronize dynamic README.md blocks."""
     paths = Paths.resolve(data_dir=data)
+    cfg = load_config(paths.config_path)
+    theme = Theme()
     stats = json.loads((paths.data_dir / "stats.json").read_text(encoding="utf-8"))
     articles = json.loads((paths.data_dir / "articles.json").read_text(encoding="utf-8"))
     s = paths.readme_path.read_text(encoding="utf-8")
 
-    s, n = re.subn(
-        r"<!-- writing:start -->.*?<!-- writing:end -->", lambda _: writing_block(articles), s, flags=re.DOTALL
-    )
-    if n != 1:
-        sys.exit("error: README needs exactly one <!-- writing:start --> … <!-- writing:end --> block")
+    s = _replace_block(s, "links", links_block(cfg.links, theme.width))
+    s = _replace_block(s, "projects", projects_block(cfg.projects))
+    s = _replace_block(s, "writing", writing_block(articles))
 
     s, n = re.subn(
         r'(<img src="\./assets/stats\.svg"[^>]*?alt=")[^"]*(")',

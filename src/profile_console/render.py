@@ -63,11 +63,13 @@ def render_svgs(
         calendar = json.loads(cal_file.read_text(encoding="utf-8"))
         _write_svg(paths.assets_dir, "contribution-city.svg", build_city(calendar, stats["updated"], theme))
     _write_svg(paths.assets_dir, "projects.svg", build_projects_head(theme))
+    n_projects = len(cfg.projects)
     for i, project in enumerate(cfg.projects):
+        side = "F" if n_projects % 2 == 1 and i == n_projects - 1 else ("L" if i % 2 == 0 else "R")
         _write_svg(
             paths.assets_dir,
             f"card-{project.slug}.svg",
-            build_card(project, "L" if i % 2 == 0 else "R", 0.3 + i * 0.12, theme, stars),
+            build_card(project, side, 0.3 + i * 0.12, theme, stars),
         )
     _write_svg(paths.assets_dir, "stack.svg", build_stack(cfg.stack, theme))
     _write_svg(paths.assets_dir, "writing.svg", build_writing_head(theme))

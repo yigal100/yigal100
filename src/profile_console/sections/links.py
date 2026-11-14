@@ -5,18 +5,25 @@ from __future__ import annotations
 from profile_console.config import LinkItem, ProfileInfo
 from profile_console.svg import Theme, esc, faces, heading, slice_svg, visible
 
-BTN_W, BTN_GAP = 124, 39  # buttons line up with the text column (x = 52 … 828)
+BTN_GAP = 39.0
 
 
-def _icon_markup(key: str, x: int, y: int, icons: dict[str, str], cyan: str, size: int = 18) -> str:
+def link_slice_bounds(index: int, total_links: int, total_width: int) -> tuple[int, int]:
+    """Return (x0, seg_width) for link slice `index` so all slices tile `total_width` exactly."""
+    x0 = round(index * total_width / total_links)
+    x1 = round((index + 1) * total_width / total_links)
+    return x0, x1 - x0
+
+
+def _icon_markup(key: str, x: float, y: int, icons: dict[str, str], cyan: str, size: int = 18) -> str:
     if key == "linkedin":  # simple generic "in" glyph (LinkedIn isn't in Simple Icons)
         return (
-            f'<rect x="{x}" y="{y}" width="{size}" height="{size}" rx="3" fill="{cyan}"/>'
-            f'<text x="{x + size / 2}" y="{y + size - 4.5}" text-anchor="middle" '
+            f'<rect x="{x:.1f}" y="{y}" width="{size}" height="{size}" rx="3" fill="{cyan}"/>'
+            f'<text x="{x + size / 2:.1f}" y="{y + size - 4.5}" text-anchor="middle" '
             f'font-weight="700" fill="#03040a" style="font-size:12px">in</text>'
         )
     d = icons[key]
-    return f'<path transform="translate({x} {y}) scale({size / 24})" d="{d}" fill="{cyan}"/>'
+    return f'<path transform="translate({x:.1f} {y}) scale({size / 24})" d="{d}" fill="{cyan}"/>'
 
 
 def build_links_head(profile: ProfileInfo, theme: Theme) -> str:
@@ -44,11 +51,12 @@ def build_link_button(
     icons: dict[str, str],
     theme: Theme,
 ) -> str:
-    """Render a single clickable link button slice."""
-    seg = theme.width // total_links
+    """Render a single clickable link button slice scaled to `total_links`."""
     h = 80
-    x0 = seg * index
-    lx = theme.text_x + index * (BTN_W + BTN_GAP) - x0
+    x0, seg = link_slice_bounds(index, total_links, theme.width)
+    content_w = (theme.frame_right - 36) - theme.text_x
+    btn_w = (content_w - (total_links - 1) * BTN_GAP) / total_links
+    lx = theme.text_x + index * (btn_w + BTN_GAP) - x0
     first, last = index == 0, index == total_links - 1
     fl, fr, cyan = theme.frame_left, theme.frame_right, theme.cyan
     bg0 = fl - x0 if first else 0
@@ -56,17 +64,17 @@ def build_link_button(
     rails = (f"M{fl - x0} 0V{h}" if first else "") + (f"M{fr - x0} 0V{h}" if last else "")
     glow = (f"M{fl - x0} -40V{h + 40}" if first else "") + (f"M{fr - x0} -40V{h + 40}" if last else "")
     by, bh, cut = 12, 56, 12
-    box = f"M{lx} {by}H{lx + BTN_W - cut}L{lx + BTN_W} {by + cut}V{by + bh}H{lx}Z"
+    box = f"M{lx:.1f} {by}H{lx + btn_w - cut:.1f}L{lx + btn_w:.1f} {by + cut}V{by + bh}H{lx:.1f}Z"
     text = link.label + link.handle + "in"
     icon_main = _icon_markup(link.icon, lx + 12, by + 11, icons, cyan)
     body = f'''<g class="ln" style="animation-delay:{0.25 + index * 0.08:.2f}s">
 <path d="{box}" fill="{cyan}" fill-opacity=".05"/>
 <path d="{box}" fill="none" stroke="{cyan}" stroke-opacity=".55"/>
-<path d="M{lx + BTN_W - cut} {by}L{lx + BTN_W} {by + cut}" stroke="{cyan}" stroke-width="2"/>
+<path d="M{lx + btn_w - cut:.1f} {by}L{lx + btn_w:.1f} {by + cut}" stroke="{cyan}" stroke-width="2"/>
 <g filter="url(#g)" opacity=".5">{icon_main}</g>
 {icon_main}
-<text x="{lx + 38}" y="{by + 25}" font-weight="700" class="cy" style="font-size:13px">{esc(link.label)}</text>
-<text x="{lx + 12}" y="{by + 46}" class="dim" style="font-size:10px">{esc(link.handle)}</text>
+<text x="{lx + 38:.1f}" y="{by + 25}" font-weight="700" class="cy" style="font-size:13px">{esc(link.label)}</text>
+<text x="{lx + 12:.1f}" y="{by + 46}" class="dim" style="font-size:10px">{esc(link.handle)}</text>
 </g>'''
     return f'''<svg xmlns="http://www.w3.org/2000/svg" width="{seg}" height="{h}" viewBox="0 0 {seg} {h}" role="img" aria-labelledby="t d">
 <title id="t">{esc(link.label)}</title>

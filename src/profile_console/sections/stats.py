@@ -75,10 +75,9 @@ def build_stats(d: dict, profile: ProfileInfo, theme: Theme) -> str:
         ("followers", fmt_num(d["followers"])),
         ("forks", fmt_num(d["forks"])),
         ("member since", f"{since:%b %Y} ({yrs}y)"),
-        ("hackathon wins", f"{d['hackathon_wins']} ★"),
     ]
     rows = "\n".join(
-        f'<text x="{x + 16}" y="{ry + 38 + i * 28}" xml:space="preserve">'
+        f'<text x="{x + 16}" y="{ry + 44 + i * 32}" xml:space="preserve">'
         f'<tspan class="cy">{esc(k)}</tspan><tspan class="dim">{"." * (16 - len(k))}</tspan> '
         f'<tspan class="fg">{esc(v)}</tspan></text>'
         for i, (k, v) in enumerate(kv)
@@ -163,7 +162,7 @@ def build_stats(d: dict, profile: ProfileInfo, theme: Theme) -> str:
     desc = (
         f"GitHub stats: {d['stars']} total stars; {activity}; "
         f"{d['prs']} pull requests ({d['prs_merged']} merged); current streak {d['streak_current']} days, longest {d['streak_longest']}; "
-        f"{d['followers']} followers; {d['forks']} forks; member since {since:%B %Y}; {d['hackathon_wins']} hackathon wins. "
+        f"{d['followers']} followers; {d['forks']} forks; member since {since:%B %Y}. "
         "Top languages: "
         + ", ".join(f"{k} {p * 100:.1f}%" for k, p in items)
         + "."

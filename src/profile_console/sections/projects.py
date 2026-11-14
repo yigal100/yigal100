@@ -27,17 +27,24 @@ def build_card(
     theme: Theme,
     stars: dict[str, int] | None = None,
 ) -> str:
-    """Render a single half-width project card slice."""
+    """Render a project card slice ('L', 'R', or 'F' for full-width odd final card)."""
     star_count = stars.get(project.slug, project.stars) if stars else project.stars
     tag_color = theme.resolve_color(project.tag_color)
     cyan = theme.cyan
-    x0 = 52 if side == "L" else 10  # card box, 378 wide, 20px gutter between the two cards
-    cw, y0, ch = 378, 12, 176
+    if side == "F":
+        x0 = theme.text_x
+        cw = (theme.frame_right - 36) - theme.text_x
+        wrap_chars = 92
+    else:
+        x0 = 52 if side == "L" else 10  # card box, 378 wide, 20px gutter between the two cards
+        cw = 378
+        wrap_chars = 43
+    y0, ch = 12, 176
     pad = 18
     tx = x0 + pad
     cut = 16
     box = f"M{x0} {y0}H{x0 + cw - cut}L{x0 + cw} {y0 + cut}V{y0 + ch}H{x0 + cut}L{x0} {y0 + ch - cut}Z"
-    lines = textwrap.wrap(project.desc, 43)
+    lines = textwrap.wrap(project.desc, wrap_chars)
     assert len(lines) <= 3, lines
     tag_w = len(project.tag) * 7.6 + 16
     title_w = len(project.name) * 10.2
@@ -65,12 +72,8 @@ def build_card(
 <text x="{sx}" y="{y0 + 158}" text-anchor="end" class="dim" style="font-size:12px">{star_count}</text>
 </g>'''
     text = project.name + project.tag + project.desc + project.stack + str(star_count)
-    return half_slice(
-        CARD_H,
-        side,
-        body,
-        title=project.name,
-        desc=f"{project.name}: {project.desc} Built with {project.stack.replace(' · ', ', ')}. {star_count} stars.",
-        text=text,
-        theme=theme,
-    )
+    title = project.name
+    card_desc = f"{project.name}: {project.desc} Built with {project.stack.replace(' · ', ', ')}. {star_count} stars."
+    if side == "F":
+        return slice_svg(CARD_H, body, title=title, desc=card_desc, text=text, theme=theme)
+    return half_slice(CARD_H, side, body, title=title, desc=card_desc, text=text, theme=theme)

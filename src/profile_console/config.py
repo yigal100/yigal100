@@ -55,7 +55,6 @@ class ProfileInfo:
 
     github_user: str
     dev_user: str
-    hackathon_wins: int
     name: str
     handle: str
     tagline_handle: str
@@ -148,12 +147,10 @@ def load_config(config_path: pathlib.Path | None = None) -> ProfileConfig:
 
     github_user = os.environ.get("GITHUB_ACTOR") or p["github_user"]
     dev_user = os.environ.get("DEV_USER", p.get("dev_user", ""))
-    hackathon_wins = int(os.environ.get("HACKATHON_WINS", str(p.get("hackathon_wins", 0))))
 
     profile = ProfileInfo(
         github_user=github_user,
         dev_user=dev_user,
-        hackathon_wins=hackathon_wins,
         name=p["name"],
         handle=p["handle"],
         tagline_handle=p["tagline_handle"],
