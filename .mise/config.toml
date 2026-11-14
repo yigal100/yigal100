@@ -3,6 +3,9 @@ markdownlint-cli2 = "latest"
 git-cliff = "latest"
 act = "latest"
 python = "3.12"
+uv = "latest"
+ruff = "latest"
+ty = "latest"
 
 [settings]
 experimental = true
@@ -15,18 +18,30 @@ skills.auto_sync = true
 
 [tasks.render]
 description = "Render profile SVGs from data/*.json"
-run = "python tools/profile/render.py"
+run = "uv run python tools/profile/render.py"
 
 [tasks.fetch]
 description = "Fetch latest GitHub and DEV stats into data/*.json"
-run = "python tools/profile/fetch.py"
+run = "uv run python tools/profile/fetch.py"
 
 [tasks.update]
 description = "Render profile SVGs and synchronize README.md"
 run = """
-python tools/profile/render.py
-python tools/profile/readme.py
+uv run python tools/profile/render.py
+uv run python tools/profile/readme.py
 """
+
+[tasks.lint]
+description = "Lint Python code with ruff"
+run = "ruff check ."
+
+[tasks.fmt]
+description = "Format Python code with ruff"
+run = "ruff format ."
+
+[tasks.typecheck]
+description = "Type check Python code with ty"
+run = "ty check"
 
 [tasks.changelog]
 description = "Generate CHANGELOG.md from Conventional Commits"
