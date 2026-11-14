@@ -12,7 +12,7 @@ CARD_H = 200
 
 def build_projects_head(theme: Theme) -> str:
     """Render the ~/projects section header."""
-    if theme.is_astrometrics:
+    if theme.is_modern:
         sec_title = theme.section_label("projects", "missions")
         sub = "active mission dossiers" if theme.scifi_labels else "featured repositories"
         body = (
@@ -65,9 +65,9 @@ def build_card(
         f'<path transform="translate({sx - len(str(star_count)) * 7.2 - 20} 158) scale(.55)" '
         f'd="M10 0l2.9 6.6 7.1.6-5.4 4.7 1.6 7L10 15.2 3.8 18.9l1.6-7L0 7.2l7.1-.6z" fill="{theme.amber}"/>'
     )
-    if theme.is_astrometrics:
+    if theme.is_modern:
         body = f'''<g class="ln" style="animation-delay:{delay:.2f}s">
-<rect x="{x0}" y="{y0}" width="{cw}" height="{ch}" rx="10" fill="{theme.surface}" stroke="{theme.border}" stroke-width="1"/>
+<rect x="{x0}" y="{y0}" width="{cw}" height="{ch}" rx="{theme.card_rx}" fill="{theme.surface}" stroke="{theme.border}" stroke-width="1"/>
 <rect x="{x0 + 14}" y="{y0}" width="56" height="3.5" rx="1.75" fill="{tag_color}"/>
 <circle cx="{sx - 6}" cy="{y0 + 26}" r="5" fill="none" stroke="{cyan}" stroke-opacity=".45" stroke-width="1"/>
 <circle cx="{sx - 6}" cy="{y0 + 26}" r="1.8" fill="{cyan}"/>

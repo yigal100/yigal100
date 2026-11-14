@@ -9,11 +9,122 @@ import math
 import pathlib
 import re
 from dataclasses import dataclass
+from typing import TypedDict
 
 from fontTools import subset
 from fontTools.ttLib import TTFont
 
 PACKAGE_DIR = pathlib.Path(__file__).resolve().parent
+
+
+class _Palette(TypedDict):
+    bg: str
+    surface: str
+    surface_alt: str
+    border: str
+    fg: str
+    wh: str
+    dim: str
+    muted: str
+    cyan: str
+    magenta: str
+    green: str
+    amber: str
+    violet: str
+
+
+_PALETTES: dict[tuple[str, str], _Palette] = {
+    ("astrometrics", "dark"): {
+        "bg": "#090d16",
+        "surface": "#0f1624",
+        "surface_alt": "#162033",
+        "border": "#1e2d45",
+        "fg": "#e2e8f0",
+        "wh": "#f8fafc",
+        "dim": "#94a3b8",
+        "muted": "#64748b",
+        "cyan": "#38bdf8",
+        "magenta": "#f472b6",
+        "green": "#4ade80",
+        "amber": "#fbbf24",
+        "violet": "#a78bfa",
+    },
+    ("astrometrics", "light"): {
+        "bg": "#f8fafc",
+        "surface": "#ffffff",
+        "surface_alt": "#e2e8f0",
+        "border": "#cbd5e1",
+        "fg": "#1e293b",
+        "wh": "#0f172a",
+        "dim": "#475569",
+        "muted": "#94a3b8",
+        "cyan": "#0284c7",
+        "magenta": "#db2777",
+        "green": "#15803d",
+        "amber": "#d97706",
+        "violet": "#7c3aed",
+    },
+    ("arcane-architect", "dark"): {
+        "bg": "#0e1017",
+        "surface": "#151924",
+        "surface_alt": "#1d2333",
+        "border": "#2a3147",
+        "fg": "#e6e1d6",
+        "wh": "#faf6ee",
+        "dim": "#9ca3af",
+        "muted": "#6b7280",
+        "cyan": "#38d9c0",
+        "magenta": "#e06c75",
+        "green": "#68b684",
+        "amber": "#e0b454",
+        "violet": "#a78bfa",
+    },
+    ("arcane-architect", "light"): {
+        "bg": "#faf6ee",
+        "surface": "#ffffff",
+        "surface_alt": "#ebe4d5",
+        "border": "#d6ccb8",
+        "fg": "#1e2430",
+        "wh": "#111827",
+        "dim": "#4b5563",
+        "muted": "#9ca3af",
+        "cyan": "#0f766e",
+        "magenta": "#b91c1c",
+        "green": "#15803d",
+        "amber": "#9a6b16",
+        "violet": "#6d28d9",
+    },
+    ("studio", "dark"): {
+        "bg": "#111111",
+        "surface": "#191919",
+        "surface_alt": "#242424",
+        "border": "#303030",
+        "fg": "#e5e2dc",
+        "wh": "#f4f1ea",
+        "dim": "#9a958c",
+        "muted": "#66625c",
+        "cyan": "#ff5c28",
+        "magenta": "#4f86ff",
+        "green": "#34d399",
+        "amber": "#fbbf24",
+        "violet": "#c084fc",
+    },
+    ("studio", "light"): {
+        "bg": "#f4f1ea",
+        "surface": "#ffffff",
+        "surface_alt": "#e6e1d6",
+        "border": "#d0c9bc",
+        "fg": "#1c1917",
+        "wh": "#141414",
+        "dim": "#57534e",
+        "muted": "#a8a29e",
+        "cyan": "#e03e1a",
+        "magenta": "#1d4ed8",
+        "green": "#15803d",
+        "amber": "#b45309",
+        "violet": "#7e22ce",
+    },
+}
 
 
 @dataclass(frozen=True)
@@ -59,51 +170,43 @@ class Theme:
                 scifi_labels=scifi_labels,
                 fonts_dir=resolved_fonts,
             )
-        if preset == "astrometrics":
-            if variant == "light":
-                return cls(
-                    preset="astrometrics",
-                    variant="light",
-                    scifi_labels=scifi_labels,
-                    bg="#f8fafc",
-                    surface="#ffffff",
-                    surface_alt="#e2e8f0",
-                    border="#cbd5e1",
-                    fg="#1e293b",
-                    wh="#0f172a",
-                    dim="#475569",
-                    muted="#94a3b8",
-                    cyan="#0284c7",
-                    magenta="#db2777",
-                    green="#15803d",
-                    amber="#d97706",
-                    violet="#7c3aed",
-                    fonts_dir=resolved_fonts,
-                )
-            return cls(
-                preset="astrometrics",
-                variant="dark",
-                scifi_labels=scifi_labels,
-                bg="#090d16",
-                surface="#0f1624",
-                surface_alt="#162033",
-                border="#1e2d45",
-                fg="#e2e8f0",
-                wh="#f8fafc",
-                dim="#94a3b8",
-                muted="#64748b",
-                cyan="#38bdf8",
-                magenta="#f472b6",
-                green="#4ade80",
-                amber="#fbbf24",
-                violet="#a78bfa",
-                fonts_dir=resolved_fonts,
-            )
-        raise ValueError(f"Unknown theme preset: {preset!r}")
+        palette = _PALETTES.get((preset, variant))
+        if palette is None:
+            raise ValueError(f"Unknown theme preset/variant: {preset!r} / {variant!r}")
+        return cls(
+            preset=preset,
+            variant=variant,
+            scifi_labels=scifi_labels,
+            fonts_dir=resolved_fonts,
+            **palette,
+        )
 
     @property
     def is_astrometrics(self) -> bool:
         return self.preset == "astrometrics"
+
+    @property
+    def is_arcane(self) -> bool:
+        return self.preset == "arcane-architect"
+
+    @property
+    def is_studio(self) -> bool:
+        return self.preset == "studio"
+
+    @property
+    def is_modern(self) -> bool:
+        """True for all non-cyberpunk adaptive themes."""
+        return self.preset != "cyberpunk"
+
+    @property
+    def card_rx(self) -> int:
+        if self.is_astrometrics:
+            return 10
+        if self.is_arcane:
+            return 6
+        if self.is_studio:
+            return 2
+        return 0
 
     @property
     def is_light(self) -> bool:
@@ -151,6 +254,21 @@ class Theme:
 
     @property
     def base_defs(self) -> str:
+        if self.is_studio:
+            return (
+                '<pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"></pattern>\n'
+                '<filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2"/></filter>\n'
+                '<filter id="g" x="-20%" y="-60%" width="140%" height="220%"><feGaussianBlur stdDeviation="1"/></filter>'
+            )
+        if self.is_arcane:
+            grid_op = ".07" if self.is_light else ".05"
+            return (
+                f'<pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">'
+                f'<path d="M40 0H0V40" fill="none" stroke="{self.amber}" stroke-opacity="{grid_op}"/>'
+                f'<path d="M20 0V40M0 20H40" fill="none" stroke="{self.amber}" stroke-opacity=".025"/></pattern>\n'
+                '<filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="4"/></filter>\n'
+                '<filter id="g" x="-20%" y="-60%" width="140%" height="220%"><feGaussianBlur stdDeviation="2"/></filter>'
+            )
         if self.is_astrometrics:
             dot_op = ".12" if self.is_light else ".14"
             grid_op = ".06" if self.is_light else ".045"
@@ -244,24 +362,33 @@ def slice_svg(
         + (f"M{fl} {y1}H{fr}" if bottom else "")
     )
     corners = ""
-    if theme.is_astrometrics:
-        if top:
-            corners += (
-                f'<circle cx="{fl}" cy="{y0}" r="3.5" fill="{theme.amber}"/>'
-                f'<circle cx="{fr}" cy="{y0}" r="3.5" fill="{theme.cyan}"/>'
-                f'<path d="M{fl + 8} {y0 - 4}H{fl + 24}M{fr - 24} {y0 - 4}H{fr - 8}" stroke="{theme.dim}" stroke-width="1"/>'
-            )
-        if bottom:
-            corners += (
-                f'<circle cx="{fl}" cy="{y1}" r="3.5" fill="{theme.cyan}"/>'
-                f'<circle cx="{fr}" cy="{y1}" r="3.5" fill="{theme.amber}"/>'
-            )
-        rail_color = theme.border if theme.is_light else theme.cyan
-        rail_op = "1" if theme.is_light else ".45"
+    if theme.is_modern:
+        if theme.is_astrometrics:
+            if top:
+                corners += (
+                    f'<circle cx="{fl}" cy="{y0}" r="3.5" fill="{theme.amber}"/>'
+                    f'<circle cx="{fr}" cy="{y0}" r="3.5" fill="{theme.cyan}"/>'
+                    f'<path d="M{fl + 8} {y0 - 4}H{fl + 24}M{fr - 24} {y0 - 4}H{fr - 8}" stroke="{theme.dim}" stroke-width="1"/>'
+                )
+            if bottom:
+                corners += (
+                    f'<circle cx="{fl}" cy="{y1}" r="3.5" fill="{theme.cyan}"/>'
+                    f'<circle cx="{fr}" cy="{y1}" r="3.5" fill="{theme.amber}"/>'
+                )
+        elif theme.is_arcane:
+            def _diamond(cx: float, cy: float, col: str) -> str:
+                return f'<path d="M{cx} {cy - 5}L{cx + 5} {cy}L{cx} {cy + 5}L{cx - 5} {cy}Z" fill="{col}"/>'
+
+            if top:
+                corners += _diamond(fl, y0, theme.amber) + _diamond(fr, y0, theme.amber)
+            if bottom:
+                corners += _diamond(fl, y1, theme.amber) + _diamond(fr, y1, theme.amber)
+        rail_color = theme.border if (theme.is_light or theme.is_studio) else (theme.amber if theme.is_arcane else theme.cyan)
+        rail_op = "1" if (theme.is_light or theme.is_studio) else ".45"
         glow_markup = (
             ""
-            if theme.is_light
-            else f'<path d="{glow}" fill="none" stroke="{theme.cyan}" stroke-width="2" opacity=".25" filter="url(#glow)"/>\n'
+            if theme.is_light or theme.is_studio
+            else f'<path d="{glow}" fill="none" stroke="{rail_color}" stroke-width="2" opacity=".2" filter="url(#glow)"/>\n'
         )
         rail_markup = f'<path d="{rails}" fill="none" stroke="{rail_color}" stroke-opacity="{rail_op}" stroke-width="1.2"/>\n<g>{corners}</g>'
     else:
@@ -312,13 +439,13 @@ def half_slice(
     hw, m, fl = theme.half_width, theme.margin, theme.frame_left
     rx = fl if side == "L" else hw - m
     bx0, bx1 = (fl, hw) if side == "L" else (0, hw - m)
-    if theme.is_astrometrics:
-        rail_color = theme.border if theme.is_light else theme.cyan
-        rail_op = "1" if theme.is_light else ".45"
+    if theme.is_modern:
+        rail_color = theme.border if (theme.is_light or theme.is_studio) else (theme.amber if theme.is_arcane else theme.cyan)
+        rail_op = "1" if (theme.is_light or theme.is_studio) else ".45"
         glow_markup = (
             ""
-            if theme.is_light
-            else f'<path d="M{rx} -40V{h + 40}" fill="none" stroke="{theme.cyan}" stroke-width="2" opacity=".25" filter="url(#glow)"/>\n'
+            if theme.is_light or theme.is_studio
+            else f'<path d="M{rx} -40V{h + 40}" fill="none" stroke="{rail_color}" stroke-width="2" opacity=".2" filter="url(#glow)"/>\n'
         )
         rail_markup = f'<path d="M{rx} 0V{h}" fill="none" stroke="{rail_color}" stroke-opacity="{rail_op}" stroke-width="1.2"/>'
     else:
@@ -356,6 +483,23 @@ def heading(y: int, name: str, counter: str, theme: Theme) -> str:
             f'<text x="{x + pill_w + 26}" y="{y}" font-weight="700" letter-spacing="1.2" class="wh" style="font-size:18px">{esc(name.upper())}</text>'
             f'<line x1="{x}" y1="{y + 14}" x2="{fr - 36}" y2="{y + 14}" stroke="{theme.border}" stroke-width="1"/>'
             f'<line x1="{x}" y1="{y + 14}" x2="{x + 110}" y2="{y + 14}" stroke="{cyan}" stroke-width="2.5" stroke-linecap="round"/>'
+        )
+    if theme.is_arcane:
+        idx = counter.replace("/", "").strip()
+        return (
+            f'<path d="M{x + 6} {y - 13}L{x + 12} {y - 7}L{x + 6} {y - 1}L{x} {y - 7}Z" fill="{theme.amber}"/>'
+            f'<text x="{x + 22}" y="{y}" font-weight="700" letter-spacing="1.6" class="wh" style="font-size:18px">{esc(name.upper())}</text>'
+            f'<text x="{fr - 36}" y="{y}" text-anchor="end" letter-spacing="2" fill="{theme.amber}" style="font-size:12px">◆ {esc(idx)}</text>'
+            f'<line x1="{x}" y1="{y + 14}" x2="{fr - 36}" y2="{y + 14}" stroke="{theme.amber}" stroke-opacity=".35"/>'
+            f'<line x1="{x}" y1="{y + 14}" x2="{x + 120}" y2="{y + 14}" stroke="{theme.amber}" stroke-width="2"/>'
+        )
+    if theme.is_studio:
+        idx = counter.replace("/", "").strip()
+        return (
+            f'<rect x="{x}" y="{y - 17}" width="30" height="20" rx="2" fill="{cyan}"/>'
+            f'<text x="{x + 15}" y="{y - 2}" text-anchor="middle" font-weight="700" fill="{theme.bg}" style="font-size:11.5px">{esc(idx)}</text>'
+            f'<text x="{x + 42}" y="{y}" font-weight="800" letter-spacing="1.5" class="wh" style="font-size:18px">{esc(name.upper())}</text>'
+            f'<line x1="{x}" y1="{y + 14}" x2="{fr - 36}" y2="{y + 14}" stroke="{theme.border}" stroke-width="1.5"/>'
         )
     return f'''<text x="{x}" y="{y}" font-weight="700" fill="{cyan}" filter="url(#g)" opacity=".8" style="font-size:20px">~/</text>
 <text x="{x}" y="{y}" font-weight="700" style="font-size:20px"><tspan class="cy">~/</tspan><tspan class="wh">{esc(name)}</tspan></text>

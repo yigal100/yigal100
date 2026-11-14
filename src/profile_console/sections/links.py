@@ -29,7 +29,7 @@ def _icon_markup(key: str, x: float, y: int, icons: dict[str, str], cyan: str, b
 def build_links_head(profile: ProfileInfo, theme: Theme) -> str:
     """Render the ~/links section header."""
     x = theme.text_x
-    if theme.is_astrometrics:
+    if theme.is_modern:
         sec_title = theme.section_label("links", "subspace-relays")
         sub = f"active relays · {profile.handle}" if theme.scifi_labels else f"channels · {profile.handle}"
         body = (
@@ -83,7 +83,7 @@ def build_link_button(
     text = link.label + link.handle + "in"
     icon_main = _icon_markup(link.icon, lx + 12, by + 11, icons, cyan, bg=theme.bg)
 
-    if theme.is_astrometrics:
+    if theme.is_modern:
         conn_left = (
             f'<line x1="0" y1="{by + bh / 2}" x2="{lx:.1f}" y2="{by + bh / 2}" '
             f'stroke="{theme.border}" stroke-width="1.2" stroke-dasharray="3 3"/>'
@@ -98,17 +98,17 @@ def build_link_button(
         )
         body = f'''<g class="ln" style="animation-delay:{0.25 + index * 0.08:.2f}s">
 {conn_left}{conn_right}
-<rect x="{lx:.1f}" y="{by}" width="{btn_w:.1f}" height="{bh}" rx="10" fill="{theme.surface}" stroke="{theme.border}" stroke-width="1.2"/>
+<rect x="{lx:.1f}" y="{by}" width="{btn_w:.1f}" height="{bh}" rx="{theme.card_rx}" fill="{theme.surface}" stroke="{theme.border}" stroke-width="1.2"/>
 <circle cx="{lx:.1f}" cy="{by + bh / 2}" r="3.5" fill="{cyan}"/>
 {icon_main}
 <text x="{lx + 38:.1f}" y="{by + 25}" font-weight="700" class="wh" style="font-size:13px">{esc(link.label)}</text>
 <text x="{lx + 12:.1f}" y="{by + 46}" class="dim" style="font-size:10px">{esc(link.handle)}</text>
 </g>'''
-        rail_color = theme.border if theme.is_light else cyan
-        rail_op = "1" if theme.is_light else ".45"
+        rail_color = theme.border if (theme.is_light or theme.is_studio) else cyan
+        rail_op = "1" if (theme.is_light or theme.is_studio) else ".45"
         glow_markup = (
             ""
-            if theme.is_light or not glow
+            if theme.is_light or theme.is_studio or not glow
             else f'<path d="{glow}" fill="none" stroke="{cyan}" stroke-width="2" opacity=".25" filter="url(#glow)"/>'
         )
         rail_markup = (

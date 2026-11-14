@@ -38,15 +38,21 @@ usage = '''
 flag "--data <dir>" help="Folder with stats.json and articles.json"
 flag "--out <dir>" help="Folder to write the SVGs into"
 flag "--config <file>" help="Path to profile.toml"
+flag "--theme <name>" help="Override theme preset (astrometrics, arcane-architect, studio, cyberpunk)"
+flag "--mode <mode>" help="Override color mode (dark, light, adaptive)"
+flag "--strategy <strategy>" help="Theme selection strategy (fixed, rotate, random)"
 '''
-run = 'uv run profile render ${usage_data:+--data "$usage_data"} ${usage_out:+--out "$usage_out"} ${usage_config:+--config "$usage_config"}'
+run = 'uv run profile render ${usage_data:+--data "$usage_data"} ${usage_out:+--out "$usage_out"} ${usage_config:+--config "$usage_config"} ${usage_theme:+--theme "$usage_theme"} ${usage_mode:+--mode "$usage_mode"} ${usage_strategy:+--strategy "$usage_strategy"}'
 
 [tasks.readme]
 description = "Synchronize dynamic README.md blocks"
 usage = '''
 flag "--data <dir>" help="Folder with stats.json and articles.json"
+flag "--theme <name>" help="Override theme preset"
+flag "--mode <mode>" help="Override color mode"
+flag "--strategy <strategy>" help="Theme selection strategy"
 '''
-run = 'uv run profile readme ${usage_data:+--data "$usage_data"}'
+run = 'uv run profile readme ${usage_data:+--data "$usage_data"} ${usage_theme:+--theme "$usage_theme"} ${usage_mode:+--mode "$usage_mode"} ${usage_strategy:+--strategy "$usage_strategy"}'
 
 [tasks.update]
 description = "Render profile SVGs and synchronize README.md"

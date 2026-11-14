@@ -17,8 +17,16 @@ from profile_console.sections.projects import build_card, build_projects_head
 from profile_console.sections.reading import build_reading_head, build_reading_row
 from profile_console.sections.stack import build_stack
 from profile_console.sections.stats import build_stats
+from profile_console.sections.terrain import build_spectrum, build_terrain
 from profile_console.sections.writing import build_article_row, build_writing_head, build_writing_more
 from profile_console.svg import Theme
+
+CENTERPIECE_BUILDERS = {
+    "astrometrics": ("orbital-chart", build_orbital),
+    "arcane-architect": ("contribution-terrain", build_terrain),
+    "studio": ("signal-spectrum", build_spectrum),
+    "cyberpunk": ("contribution-city", build_city),
+}
 
 
 def _write_svg(out_dir: pathlib.Path, rel: str, svg: str) -> None:
@@ -53,10 +61,8 @@ def _render_variant(
         )
     _write_svg(paths.assets_dir, name("stats"), build_stats(stats, cfg.profile, theme))
     if calendar is not None:
-        if theme.is_astrometrics:
-            _write_svg(paths.assets_dir, name("orbital-chart"), build_orbital(calendar, stats["updated"], theme))
-        else:
-            _write_svg(paths.assets_dir, name("contribution-city"), build_city(calendar, stats["updated"], theme))
+        stem, builder = CENTERPIECE_BUILDERS[theme.preset]
+        _write_svg(paths.assets_dir, name(stem), builder(calendar, stats["updated"], theme))
     _write_svg(paths.assets_dir, name("projects"), build_projects_head(theme))
     n_projects = len(cfg.projects)
     for i, project in enumerate(cfg.projects):
@@ -93,10 +99,27 @@ def render_svgs(
         pathlib.Path | None,
         typer.Option("--config", help="Path to profile.toml"),
     ] = None,
+    theme_name: Annotated[
+        str | None,
+        typer.Option("--theme", help="Override theme preset (astrometrics, arcane-architect, studio, cyberpunk)"),
+    ] = None,
+    mode: Annotated[
+        str | None,
+        typer.Option("--mode", help="Override color mode (dark, light, adaptive)"),
+    ] = None,
+    strategy: Annotated[
+        str | None,
+        typer.Option("--strategy", help="Theme selection strategy (fixed, rotate, random)"),
+    ] = None,
 ) -> None:
     """Render profile SVGs from data/*.json."""
     paths = Paths.resolve(data_dir=data, out_dir=out, config_path=config)
     cfg = load_config(paths.config_path)
+    resolved_name, resolved_mode = cfg.theme.resolve(
+        theme_override=theme_name,
+        mode_override=mode,
+        strategy_override=strategy,
+    )
 
     stats = json.loads((paths.data_dir / "stats.json").read_text(encoding="utf-8"))
     articles = json.loads((paths.data_dir / "articles.json").read_text(encoding="utf-8"))
@@ -104,26 +127,35 @@ def render_svgs(
     cal_file = paths.data_dir / "calendar.json"
     calendar = json.loads(cal_file.read_text(encoding="utf-8")) if cal_file.exists() else None
 
-    if cfg.theme.name == "astrometrics" and cfg.theme.mode == "adaptive":
+    if resolved_name != "cyberpunk" and resolved_mode == "adaptive":
         for variant in ("dark", "light"):
             theme = Theme.from_preset(
-                cfg.theme.name,
+                resolved_name,
                 variant,
                 scifi_labels=cfg.theme.scifi_labels,
                 fonts_dir=paths.fonts_dir,
             )
             _render_variant(cfg, paths, stats, articles, icons, calendar, theme, suffix=f"-{variant}")
     else:
-        variant = "dark" if cfg.theme.name == "cyberpunk" else cfg.theme.mode
+        variant = "dark" if resolved_name == "cyberpunk" else resolved_mode
         theme = Theme.from_preset(
-            cfg.theme.name,
+            resolved_name,
             variant,
             scifi_labels=cfg.theme.scifi_labels,
             fonts_dir=paths.fonts_dir,
         )
         _render_variant(cfg, paths, stats, articles, icons, calendar, theme)
 
-    print("rendered", len(list(paths.assets_dir.rglob("*.svg"))), "SVGs into", paths.assets_dir)
+    paths.assets_dir.mkdir(parents=True, exist_ok=True)
+    (paths.assets_dir / ".theme.json").write_text(
+        json.dumps({"name": resolved_name, "mode": resolved_mode, "scifi_labels": cfg.theme.scifi_labels}, indent=2)
+        + "\n",
+        encoding="utf-8",
+    )
+    print(
+        f"rendered {len(list(paths.assets_dir.rglob('*.svg')))} SVGs into {paths.assets_dir} "
+        f"(theme={resolved_name}, mode={resolved_mode})"
+    )
 
 
 if __name__ == "__main__":

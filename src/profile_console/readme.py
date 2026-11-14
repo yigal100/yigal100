@@ -131,20 +131,25 @@ def stats_alt(d: dict) -> str:
     return html.escape(text, quote=True)
 
 
-def city_alt(calendar: list[list], *, astrometrics: bool = False) -> str:
+CENTERPIECE_STEMS = {
+    "astrometrics": "orbital-chart",
+    "arcane-architect": "contribution-terrain",
+    "studio": "signal-spectrum",
+    "cyberpunk": "contribution-city",
+}
+
+
+def city_alt(calendar: list[list], *, theme_name: str = "cyberpunk") -> str:
     """Build accessible alt text summarizing the contribution visualization."""
     total = sum(n for _, n in calendar)
     busiest = max(calendar, key=lambda t: t[1]) if calendar else None
-    if astrometrics:
-        text = (
-            f"Orbital contribution chart: a 3D-perspective star chart of the last 365 days. "
-            f"{total:,} contributions"
-        )
-    else:
-        text = (
-            f"Contribution city: an isometric night skyline with one building per day of the last year. "
-            f"{total:,} contributions"
-        )
+    prefixes = {
+        "astrometrics": "Orbital contribution chart: a 3D-perspective star chart of the last 365 days.",
+        "arcane-architect": "Contribution terrain: layered mountain ridgelines of the last 365 days.",
+        "studio": "Contribution spectrum: 52-week signal bars of the last 365 days.",
+        "cyberpunk": "Contribution city: an isometric night skyline with one building per day of the last year.",
+    }
+    text = f"{prefixes.get(theme_name, prefixes['cyberpunk'])} {total:,} contributions"
     if busiest and busiest[1]:
         d = datetime.date.fromisoformat(busiest[0])
         text += f", busiest day {d:%B} {d.day} with {busiest[1]}"
@@ -157,10 +162,13 @@ def _console_block(
     articles: list[dict],
     calendar: list[list] | None,
     width: int,
+    *,
+    theme_name: str,
+    mode: str,
 ) -> str:
     """Build the complete <p align='center'>...</p> SVG console stack."""
-    adaptive = cfg.theme.name == "astrometrics" and cfg.theme.mode == "adaptive"
-    is_astro = cfg.theme.name == "astrometrics"
+    adaptive = theme_name != "cyberpunk" and mode == "adaptive"
+    is_modern = theme_name != "cyberpunk"
     header_alt = html.escape(f"{cfg.profile.header_title} — {cfg.profile.header_desc}", quote=True)
     stack_alt = html.escape(
         "Tech stack: " + ", ".join(c.category for c in cfg.stack) + ".",
@@ -177,8 +185,8 @@ def _console_block(
         _img_tag("stats", "100%", stats_alt(stats), adaptive=adaptive),
     ]
     if calendar is not None:
-        stem = "orbital-chart" if is_astro else "contribution-city"
-        lines.append(_img_tag(stem, "100%", city_alt(calendar, astrometrics=is_astro), adaptive=adaptive))
+        stem = CENTERPIECE_STEMS.get(theme_name, "contribution-city")
+        lines.append(_img_tag(stem, "100%", city_alt(calendar, theme_name=theme_name), adaptive=adaptive))
     lines.extend(
         [
             _img_tag("projects", "100%", "Projects", adaptive=adaptive),
@@ -203,7 +211,7 @@ def _console_block(
         )
     lines.extend(
         [
-            _img_tag("footer", "100%", "End of transmission." if is_astro else "Connection closed.", adaptive=adaptive),
+            _img_tag("footer", "100%", "End of transmission." if is_modern else "Connection closed.", adaptive=adaptive),
             "</p>",
             "<!-- console:end -->",
         ]
@@ -228,21 +236,48 @@ def update_readme(
         pathlib.Path | None,
         typer.Option("--data", help="Folder with stats.json and articles.json"),
     ] = None,
+    theme_name: Annotated[
+        str | None,
+        typer.Option("--theme", help="Override theme preset (astrometrics, arcane-architect, studio, cyberpunk)"),
+    ] = None,
+    mode: Annotated[
+        str | None,
+        typer.Option("--mode", help="Override color mode (dark, light, adaptive)"),
+    ] = None,
+    strategy: Annotated[
+        str | None,
+        typer.Option("--strategy", help="Theme selection strategy (fixed, rotate, random)"),
+    ] = None,
 ) -> None:
     """Synchronize dynamic README.md blocks."""
     paths = Paths.resolve(data_dir=data)
     cfg = load_config(paths.config_path)
-    theme = Theme.from_preset(cfg.theme.name, scifi_labels=cfg.theme.scifi_labels)
+    meta_file = paths.assets_dir / ".theme.json"
+    if theme_name is None and strategy is None and meta_file.exists():
+        meta = json.loads(meta_file.read_text(encoding="utf-8"))
+        resolved_name = str(meta.get("name") or cfg.theme.resolve()[0])
+        resolved_mode = (mode or str(meta.get("mode") or cfg.theme.mode)).lower()
+    else:
+        resolved_name, resolved_mode = cfg.theme.resolve(
+            theme_override=theme_name,
+            mode_override=mode,
+            strategy_override=strategy,
+        )
+    theme = Theme.from_preset(resolved_name, scifi_labels=cfg.theme.scifi_labels)
     stats = json.loads((paths.data_dir / "stats.json").read_text(encoding="utf-8"))
     articles = json.loads((paths.data_dir / "articles.json").read_text(encoding="utf-8"))
     cal_file = paths.data_dir / "calendar.json"
     calendar = json.loads(cal_file.read_text(encoding="utf-8")) if cal_file.exists() else None
     s = paths.readme_path.read_text(encoding="utf-8")
 
-    s = _replace_block(s, "console", _console_block(cfg, stats, articles, calendar, theme.width))
+    s = _replace_block(
+        s,
+        "console",
+        _console_block(cfg, stats, articles, calendar, theme.width, theme_name=resolved_name, mode=resolved_mode),
+    )
 
     paths.readme_path.write_text(s, encoding="utf-8")
-    print("README updated")
+    print(f"README updated (theme={resolved_name}, mode={resolved_mode})")
 
 
 if __name__ == "__main__":

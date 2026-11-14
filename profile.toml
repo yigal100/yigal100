@@ -1,7 +1,9 @@
 [theme]
-name = "astrometrics"   # "astrometrics" | "cyberpunk"
+name = ""               # leave empty to use strategy, or pin: "astrometrics" | "arcane-architect" | "studio" | "cyberpunk"
 mode = "adaptive"       # "dark" | "light" | "adaptive"
-scifi_labels = true    # true for SECTOR / TELEMETRY / MISSIONS / LOADOUT labels
+strategy = "rotate"     # "fixed" | "rotate" | "random"
+pool = ["astrometrics", "arcane-architect", "studio", "cyberpunk"]
+scifi_labels = true     # true for SECTOR / TELEMETRY / MISSIONS / LOADOUT labels
 
 [profile]
 github_user = "yigal100"
