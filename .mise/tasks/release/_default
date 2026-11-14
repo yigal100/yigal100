@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+#MISE description="Cut a new release (calculate version, update CHANGELOG.md, commit, and tag)"
+set -euo pipefail
+
+if ! git diff-index --quiet HEAD --; then
+  echo "Error: Uncommitted changes detected. Commit or stash them before cutting a release." >&2
+  exit 1
+fi
+
+if [ -n "${1:-}" ]; then
+  VERSION="$1"
+else
+  VERSION="$(git-cliff --bumped-version 2>/dev/null || true)"
+  if [ -z "$VERSION" ]; then
+    echo "Error: Could not determine next version automatically." >&2
+    echo "Usage: mise run release -- [version]" >&2
+    exit 1
+  fi
+fi
+
+TAG="v${VERSION#v}"
+echo "==> Cutting release: ${TAG}"
+
+git-cliff --tag "${TAG}" -o CHANGELOG.md
+git add CHANGELOG.md
+git commit -m "chore(release): prepare for ${TAG}"
+git tag -a "${TAG}" -m "Release ${TAG}"
+
+echo "==> Release ${TAG} created successfully!"
+echo "    Commit: $(git rev-parse --short HEAD)"
+echo "    Tag:    ${TAG}"
+echo "    Push:   git push origin HEAD --tags"

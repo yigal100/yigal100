@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+#MISE description="Preview release notes and version calculation without creating commit or tag"
+set -euo pipefail
+
+if [ -n "${1:-}" ]; then
+  VERSION="$1"
+else
+  VERSION="$(git-cliff --bumped-version 2>/dev/null || true)"
+fi
+
+TAG="v${VERSION#v}"
+echo "==> [Dry Run] Target release: ${TAG}"
+echo "==> [Dry Run] Generated release notes preview:"
+echo ""
+git-cliff --tag "${TAG}" --unreleased
