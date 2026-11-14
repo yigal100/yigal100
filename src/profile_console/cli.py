@@ -1,50 +1,71 @@
 """Unified CLI entrypoint for profile-console."""
 
-import argparse
+import pathlib
+from typing import Annotated
+
+import typer
 
 from profile_console.fetch import main as fetch_main
 from profile_console.readme import main as readme_main
 from profile_console.render import main as render_main
 
+app = typer.Typer(
+    name="profile",
+    help="GitHub Profile Console CLI",
+    no_args_is_help=True,
+    add_completion=False,
+)
 
-def update():
-    """Renders SVGs and synchronizes README."""
+
+@app.command()
+def fetch() -> None:
+    """Fetch latest stats into data/*.json."""
+    fetch_main()
+
+
+@app.command()
+def render(
+    data: Annotated[
+        pathlib.Path | None,
+        typer.Option("--data", help="Folder with stats.json and articles.json"),
+    ] = None,
+    out: Annotated[
+        pathlib.Path | None,
+        typer.Option("--out", help="Folder to write the SVGs into"),
+    ] = None,
+) -> None:
+    """Render profile SVGs from data/*.json."""
+    render_main(data_dir=data, out_dir=out)
+
+
+@app.command()
+def readme() -> None:
+    """Synchronize dynamic README.md blocks."""
+    readme_main()
+
+
+@app.command()
+def update() -> None:
+    """Render SVGs and synchronize README.md."""
     render_main()
     readme_main()
 
 
-def full_sync():
-    """Fetches fresh data, renders SVGs, and synchronizes README."""
+def full_sync() -> None:
+    """Fetch fresh data, render SVGs, and synchronize README."""
     fetch_main()
     render_main()
     readme_main()
 
 
-def main():
-    parser = argparse.ArgumentParser(prog="profile", description="GitHub Profile Console CLI")
-    subparsers = parser.add_subparsers(dest="command", required=True)
+@app.command()
+def sync() -> None:
+    """Fetch fresh data, render SVGs, and synchronize README.md."""
+    full_sync()
 
-    subparsers.add_parser("fetch", help="Fetch latest stats into data/*.json")
 
-    sub_render = subparsers.add_parser("render", help="Render profile SVGs from data/*.json")
-    sub_render.add_argument("--data", type=str, default=None, help="Folder with stats.json and articles.json")
-    sub_render.add_argument("--out", type=str, default=None, help="Folder to write the SVGs into")
-
-    subparsers.add_parser("readme", help="Synchronize dynamic README.md blocks")
-    subparsers.add_parser("update", help="Render SVGs and synchronize README.md")
-    subparsers.add_parser("sync", help="Fetch fresh data, render SVGs, and synchronize README.md")
-
-    args = parser.parse_args()
-    if args.command == "fetch":
-        fetch_main()
-    elif args.command == "render":
-        render_main(data_dir=args.data, out_dir=args.out)
-    elif args.command == "readme":
-        readme_main()
-    elif args.command == "update":
-        update()
-    elif args.command == "sync":
-        full_sync()
+def main() -> None:
+    app()
 
 
 if __name__ == "__main__":
