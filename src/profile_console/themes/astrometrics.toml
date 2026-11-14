@@ -1,0 +1,51 @@
+# Astrometrics theme: Deep Space Observatory (dark) & Star Chart Paper (light)
+
+card_rx = 10
+grid_style = "dot"
+frame_style = "reticles"
+heading_style = "capsule"
+use_glow = true
+centerpiece_stem = "orbital-chart"
+centerpiece_alt = "Orbital contribution chart: a 3D-perspective star chart of the last 365 days."
+kicker = "OBSERVATORY // IDENTITY LOG"
+footer_status = "ORBIT NOMINAL · CONTINUOUS EXPLORATION"
+footer_tag = "BOLDLY ARCHITECTING"
+
+[labels]
+links = "subspace-relays"
+stats = "telemetry"
+centerpiece = "astrometrics"
+projects = "missions"
+stack = "loadout"
+writing = "subspace-log"
+reading = "curated-feed"
+
+[palettes.dark]
+bg = "#090d16"
+surface = "#0f1624"
+surface_alt = "#162033"
+border = "#1e2d45"
+fg = "#e2e8f0"
+wh = "#f8fafc"
+dim = "#94a3b8"
+muted = "#64748b"
+cyan = "#38bdf8"
+magenta = "#f472b6"
+green = "#4ade80"
+amber = "#fbbf24"
+violet = "#a78bfa"
+
+[palettes.light]
+bg = "#f8fafc"
+surface = "#ffffff"
+surface_alt = "#e2e8f0"
+border = "#cbd5e1"
+fg = "#1e293b"
+wh = "#0f172a"
+dim = "#475569"
+muted = "#94a3b8"
+cyan = "#0284c7"
+magenta = "#db2777"
+green = "#15803d"
+amber = "#d97706"
+violet = "#7c3aed"

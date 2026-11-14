@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import base64
+import functools
 import html
 import io
 import math
 import pathlib
 import re
+import tomllib
 from dataclasses import dataclass
 from typing import TypedDict
 
@@ -15,6 +17,7 @@ from fontTools import subset
 from fontTools.ttLib import TTFont
 
 PACKAGE_DIR = pathlib.Path(__file__).resolve().parent
+THEMES_DIR = PACKAGE_DIR / "themes"
 
 
 class _Palette(TypedDict):
@@ -33,130 +36,6 @@ class _Palette(TypedDict):
     violet: str
 
 
-_PALETTES: dict[tuple[str, str], _Palette] = {
-    ("astrometrics", "dark"): {
-        "bg": "#090d16",
-        "surface": "#0f1624",
-        "surface_alt": "#162033",
-        "border": "#1e2d45",
-        "fg": "#e2e8f0",
-        "wh": "#f8fafc",
-        "dim": "#94a3b8",
-        "muted": "#64748b",
-        "cyan": "#38bdf8",
-        "magenta": "#f472b6",
-        "green": "#4ade80",
-        "amber": "#fbbf24",
-        "violet": "#a78bfa",
-    },
-    ("astrometrics", "light"): {
-        "bg": "#f8fafc",
-        "surface": "#ffffff",
-        "surface_alt": "#e2e8f0",
-        "border": "#cbd5e1",
-        "fg": "#1e293b",
-        "wh": "#0f172a",
-        "dim": "#475569",
-        "muted": "#94a3b8",
-        "cyan": "#0284c7",
-        "magenta": "#db2777",
-        "green": "#15803d",
-        "amber": "#d97706",
-        "violet": "#7c3aed",
-    },
-    ("arcane-architect", "dark"): {
-        "bg": "#0e1017",
-        "surface": "#151924",
-        "surface_alt": "#1d2333",
-        "border": "#2a3147",
-        "fg": "#e6e1d6",
-        "wh": "#faf6ee",
-        "dim": "#9ca3af",
-        "muted": "#6b7280",
-        "cyan": "#38d9c0",
-        "magenta": "#e06c75",
-        "green": "#68b684",
-        "amber": "#e0b454",
-        "violet": "#a78bfa",
-    },
-    ("arcane-architect", "light"): {
-        "bg": "#faf6ee",
-        "surface": "#ffffff",
-        "surface_alt": "#ebe4d5",
-        "border": "#d6ccb8",
-        "fg": "#1e2430",
-        "wh": "#111827",
-        "dim": "#4b5563",
-        "muted": "#9ca3af",
-        "cyan": "#0f766e",
-        "magenta": "#b91c1c",
-        "green": "#15803d",
-        "amber": "#9a6b16",
-        "violet": "#6d28d9",
-    },
-    ("studio", "dark"): {
-        "bg": "#111111",
-        "surface": "#191919",
-        "surface_alt": "#242424",
-        "border": "#303030",
-        "fg": "#e5e2dc",
-        "wh": "#f4f1ea",
-        "dim": "#9a958c",
-        "muted": "#66625c",
-        "cyan": "#ff5c28",
-        "magenta": "#4f86ff",
-        "green": "#34d399",
-        "amber": "#fbbf24",
-        "violet": "#c084fc",
-    },
-    ("studio", "light"): {
-        "bg": "#f4f1ea",
-        "surface": "#ffffff",
-        "surface_alt": "#e6e1d6",
-        "border": "#d0c9bc",
-        "fg": "#1c1917",
-        "wh": "#141414",
-        "dim": "#57534e",
-        "muted": "#a8a29e",
-        "cyan": "#e03e1a",
-        "magenta": "#1d4ed8",
-        "green": "#15803d",
-        "amber": "#b45309",
-        "violet": "#7e22ce",
-    },
-    ("cyberpunk", "dark"): {
-        "bg": "#03040a",
-        "surface": "#090d16",
-        "surface_alt": "#11161d",
-        "border": "#1e293b",
-        "fg": "#c9d1d9",
-        "wh": "#f0fbff",
-        "dim": "#8b949e",
-        "muted": "#484f58",
-        "cyan": "#00d9ff",
-        "magenta": "#ff2bd6",
-        "green": "#3fb950",
-        "amber": "#e3b341",
-        "violet": "#bc8cff",
-    },
-    ("cyberpunk", "light"): {
-        "bg": "#f4f6f9",
-        "surface": "#ffffff",
-        "surface_alt": "#e6ebf2",
-        "border": "#cbd5e1",
-        "fg": "#1f2328",
-        "wh": "#0b1220",
-        "dim": "#57606a",
-        "muted": "#8c959f",
-        "cyan": "#0077b6",
-        "magenta": "#c026d3",
-        "green": "#15803d",
-        "amber": "#b45309",
-        "violet": "#6d28d9",
-    },
-}
-
-
 class _ThemeSpec(TypedDict):
     card_rx: int
     grid_style: str
@@ -171,92 +50,45 @@ class _ThemeSpec(TypedDict):
     labels: dict[str, str]
 
 
-_THEME_SPECS: dict[str, _ThemeSpec] = {
-    "astrometrics": {
-        "card_rx": 10,
-        "grid_style": "dot",
-        "frame_style": "reticles",
-        "heading_style": "capsule",
-        "use_glow": True,
-        "centerpiece_stem": "orbital-chart",
-        "centerpiece_alt": "Orbital contribution chart: a 3D-perspective star chart of the last 365 days.",
-        "kicker": "OBSERVATORY // IDENTITY LOG",
-        "footer_status": "ORBIT NOMINAL · CONTINUOUS EXPLORATION",
-        "footer_tag": "BOLDLY ARCHITECTING",
-        "labels": {
-            "links": "subspace-relays",
-            "stats": "telemetry",
-            "centerpiece": "astrometrics",
-            "projects": "missions",
-            "stack": "loadout",
-            "writing": "subspace-log",
-            "reading": "curated-feed",
-        },
-    },
-    "arcane-architect": {
-        "card_rx": 6,
-        "grid_style": "blueprint",
-        "frame_style": "diamonds",
-        "heading_style": "diamond",
-        "use_glow": True,
-        "centerpiece_stem": "contribution-terrain",
-        "centerpiece_alt": "Contribution terrain: layered mountain ridgelines of the last 365 days.",
-        "kicker": "CHARACTER SHEET // ARCHITECT",
-        "footer_status": "PROFICIENCY: SYSTEMS & CLOUD",
-        "footer_tag": "CHAOTIC GOOD",
-        "labels": {
-            "links": "portals",
-            "stats": "attributes",
-            "centerpiece": "terrain",
-            "projects": "quests",
-            "stack": "proficiencies",
-            "writing": "chronicles",
-            "reading": "tomes",
-        },
-    },
-    "studio": {
-        "card_rx": 2,
-        "grid_style": "none",
-        "frame_style": "clean",
-        "heading_style": "block",
-        "use_glow": False,
-        "centerpiece_stem": "signal-spectrum",
-        "centerpiece_alt": "Contribution spectrum: 52-week signal bars of the last 365 days.",
-        "kicker": "00 // STUDIO SPEC SHEET",
-        "footer_status": "CHAOTIC GOOD · BUILD & SHIP",
-        "footer_tag": "CHAOTIC GOOD STUDIO",
-        "labels": {
-            "links": "channels",
-            "stats": "metrics",
-            "centerpiece": "spectrum",
-            "projects": "works",
-            "stack": "index",
-            "writing": "journal",
-            "reading": "bookmarks",
-        },
-    },
-    "cyberpunk": {
-        "card_rx": 0,
-        "grid_style": "square",
-        "frame_style": "brackets",
-        "heading_style": "terminal",
-        "use_glow": True,
-        "centerpiece_stem": "contribution-city",
-        "centerpiece_alt": "Contribution city: an isometric skyline with one building per day of the last year.",
-        "kicker": "SYS://TERMINAL",
-        "footer_status": "CONNECTION ACTIVE",
-        "footer_tag": "// EOF",
-        "labels": {
-            "links": "uplinks",
-            "stats": "sys-metrics",
-            "centerpiece": "night-city",
-            "projects": "deployments",
-            "stack": "loadout",
-            "writing": "dev-log",
-            "reading": "intel-feed",
-        },
-    },
-}
+@functools.lru_cache(maxsize=16)
+def _load_theme_toml(preset: str) -> tuple[_ThemeSpec, dict[str, _Palette]]:
+    """Load and cache theme spec and dark/light palettes from themes/<preset>.toml."""
+    path = THEMES_DIR / f"{preset}.toml"
+    if not path.exists():
+        raise ValueError(f"Unknown theme preset {preset!r}: missing {path}")
+    raw = tomllib.loads(path.read_text(encoding="utf-8"))
+    spec: _ThemeSpec = {
+        "card_rx": int(raw["card_rx"]),
+        "grid_style": str(raw["grid_style"]),
+        "frame_style": str(raw["frame_style"]),
+        "heading_style": str(raw["heading_style"]),
+        "use_glow": bool(raw["use_glow"]),
+        "centerpiece_stem": str(raw["centerpiece_stem"]),
+        "centerpiece_alt": str(raw["centerpiece_alt"]),
+        "kicker": str(raw["kicker"]),
+        "footer_status": str(raw["footer_status"]),
+        "footer_tag": str(raw["footer_tag"]),
+        "labels": {str(k): str(v) for k, v in raw.get("labels", {}).items()},
+    }
+    palettes: dict[str, _Palette] = {
+        variant: {
+            "bg": str(pal["bg"]),
+            "surface": str(pal["surface"]),
+            "surface_alt": str(pal["surface_alt"]),
+            "border": str(pal["border"]),
+            "fg": str(pal["fg"]),
+            "wh": str(pal["wh"]),
+            "dim": str(pal["dim"]),
+            "muted": str(pal["muted"]),
+            "cyan": str(pal["cyan"]),
+            "magenta": str(pal["magenta"]),
+            "green": str(pal["green"]),
+            "amber": str(pal["amber"]),
+            "violet": str(pal["violet"]),
+        }
+        for variant, pal in raw["palettes"].items()
+    }
+    return spec, palettes
 
 
 @dataclass(frozen=True)
@@ -295,9 +127,10 @@ class Theme:
     ) -> Theme:
         """Build a Theme from a named preset and light/dark variant."""
         resolved_fonts = fonts_dir or (PACKAGE_DIR / "fonts")
-        palette = _PALETTES.get((preset, variant))
+        _, palettes = _load_theme_toml(preset)
+        palette = palettes.get(variant)
         if palette is None:
-            raise ValueError(f"Unknown theme preset/variant: {preset!r} / {variant!r}")
+            raise ValueError(f"Unknown variant {variant!r} for theme {preset!r}")
         return cls(
             preset=preset,
             variant=variant,
@@ -308,7 +141,8 @@ class Theme:
 
     @property
     def spec(self) -> _ThemeSpec:
-        return _THEME_SPECS[self.preset]
+        spec, _ = _load_theme_toml(self.preset)
+        return spec
 
     @property
     def is_astrometrics(self) -> bool:

@@ -1,0 +1,51 @@
+# Cyberpunk theme: Neon Console (dark) & Daylight Ice Deck (light)
+
+card_rx = 0
+grid_style = "square"
+frame_style = "brackets"
+heading_style = "terminal"
+use_glow = true
+centerpiece_stem = "contribution-city"
+centerpiece_alt = "Contribution city: an isometric skyline with one building per day of the last year."
+kicker = "SYS://TERMINAL"
+footer_status = "CONNECTION ACTIVE"
+footer_tag = "// EOF"
+
+[labels]
+links = "uplinks"
+stats = "sys-metrics"
+centerpiece = "night-city"
+projects = "deployments"
+stack = "loadout"
+writing = "dev-log"
+reading = "intel-feed"
+
+[palettes.dark]
+bg = "#03040a"
+surface = "#090d16"
+surface_alt = "#11161d"
+border = "#1e293b"
+fg = "#c9d1d9"
+wh = "#f0fbff"
+dim = "#8b949e"
+muted = "#484f58"
+cyan = "#00d9ff"
+magenta = "#ff2bd6"
+green = "#3fb950"
+amber = "#e3b341"
+violet = "#bc8cff"
+
+[palettes.light]
+bg = "#f4f6f9"
+surface = "#ffffff"
+surface_alt = "#e6ebf2"
+border = "#cbd5e1"
+fg = "#1f2328"
+wh = "#0b1220"
+dim = "#57606a"
+muted = "#8c959f"
+cyan = "#0077b6"
+magenta = "#c026d3"
+green = "#15803d"
+amber = "#b45309"
+violet = "#6d28d9"

@@ -1,0 +1,51 @@
+# Studio theme: Matte Carbon (dark) & Newsprint (light)
+
+card_rx = 2
+grid_style = "none"
+frame_style = "clean"
+heading_style = "block"
+use_glow = false
+centerpiece_stem = "signal-spectrum"
+centerpiece_alt = "Contribution spectrum: 52-week signal bars of the last 365 days."
+kicker = "00 // STUDIO SPEC SHEET"
+footer_status = "CHAOTIC GOOD · BUILD & SHIP"
+footer_tag = "CHAOTIC GOOD STUDIO"
+
+[labels]
+links = "channels"
+stats = "metrics"
+centerpiece = "spectrum"
+projects = "works"
+stack = "index"
+writing = "journal"
+reading = "bookmarks"
+
+[palettes.dark]
+bg = "#111111"
+surface = "#191919"
+surface_alt = "#242424"
+border = "#303030"
+fg = "#e5e2dc"
+wh = "#f4f1ea"
+dim = "#9a958c"
+muted = "#66625c"
+cyan = "#ff5c28"
+magenta = "#4f86ff"
+green = "#34d399"
+amber = "#fbbf24"
+violet = "#c084fc"
+
+[palettes.light]
+bg = "#f4f1ea"
+surface = "#ffffff"
+surface_alt = "#e6e1d6"
+border = "#d0c9bc"
+fg = "#1c1917"
+wh = "#141414"
+dim = "#57534e"
+muted = "#a8a29e"
+cyan = "#e03e1a"
+magenta = "#1d4ed8"
+green = "#15803d"
+amber = "#b45309"
+violet = "#7e22ce"

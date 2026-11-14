@@ -1,0 +1,51 @@
+# Arcane Architect theme: Obsidian Vellum (dark) & Drafting Vellum (light)
+
+card_rx = 6
+grid_style = "blueprint"
+frame_style = "diamonds"
+heading_style = "diamond"
+use_glow = true
+centerpiece_stem = "contribution-terrain"
+centerpiece_alt = "Contribution terrain: layered mountain ridgelines of the last 365 days."
+kicker = "CHARACTER SHEET // ARCHITECT"
+footer_status = "PROFICIENCY: SYSTEMS & CLOUD"
+footer_tag = "CHAOTIC GOOD"
+
+[labels]
+links = "portals"
+stats = "attributes"
+centerpiece = "terrain"
+projects = "quests"
+stack = "proficiencies"
+writing = "chronicles"
+reading = "tomes"
+
+[palettes.dark]
+bg = "#0e1017"
+surface = "#151924"
+surface_alt = "#1d2333"
+border = "#2a3147"
+fg = "#e6e1d6"
+wh = "#faf6ee"
+dim = "#9ca3af"
+muted = "#6b7280"
+cyan = "#38d9c0"
+magenta = "#e06c75"
+green = "#68b684"
+amber = "#e0b454"
+violet = "#a78bfa"
+
+[palettes.light]
+bg = "#faf6ee"
+surface = "#ffffff"
+surface_alt = "#ebe4d5"
+border = "#d6ccb8"
+fg = "#1e2430"
+wh = "#111827"
+dim = "#4b5563"
+muted = "#9ca3af"
+cyan = "#0f766e"
+magenta = "#b91c1c"
+green = "#15803d"
+amber = "#9a6b16"
+violet = "#6d28d9"

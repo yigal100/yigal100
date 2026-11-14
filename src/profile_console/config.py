@@ -148,7 +148,15 @@ class ReadingItem:
         )
 
 
-VALID_THEMES = ("astrometrics", "arcane-architect", "studio", "cyberpunk")
+THEMES_DIR = PACKAGE_DIR / "themes"
+
+
+def available_themes() -> tuple[str, ...]:
+    """Return sorted theme preset names discovered from themes/*.toml."""
+    return tuple(sorted(p.stem for p in THEMES_DIR.glob("*.toml")))
+
+
+VALID_THEMES = available_themes()
 VALID_MODES = ("dark", "light", "adaptive")
 VALID_STRATEGIES = ("fixed", "rotate", "random")
 
