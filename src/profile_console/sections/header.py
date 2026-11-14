@@ -16,7 +16,7 @@ def _build_astro_header(profile: ProfileInfo, theme: Theme) -> str:
     lines = profile.bio
     h = 360
 
-    dotx = fr - 20 - len(bar_right) * 7.6 - 14
+    dotx = fr - 20 - len(bar_right) * 8.2 - 16
     rows: list[str | None] = [
         f'<text class="fg" x="{x + 14}" y="{{y}}"><circle cx="{x + 4}" cy="{{y - 5}}" r="2.5" fill="{cyan}"/>{esc(line)}</text>'
         for line in lines[:-1]
