@@ -85,8 +85,8 @@ def _build_modern_header(profile: ProfileInfo, theme: Theme) -> str:
             f'<rect x="{fr - 72}" y="182" width="24" height="6" fill="{theme.magenta}"/>'
         )
 
-    kicker = theme.spec["kicker"] if theme.scifi_labels else "IDENTITY // PROFILE"
-    footer_status = theme.spec["footer_status"] if theme.scifi_labels else "SYSTEMS NOMINAL · READY"
+    kicker = theme.spec["kicker"] if theme.themed_labels else "IDENTITY // PROFILE"
+    footer_status = theme.spec["footer_status"] if theme.themed_labels else "SYSTEMS NOMINAL · READY"
 
     text = bar_left + bar_right + kicker + name + "ALIGNMENTCHAOTIC GOOD" + "".join(lines) + profile.tagline_handle + footer_status
     accent_bar = theme.accent_color
@@ -195,7 +195,7 @@ def build_footer(profile: ProfileInfo, theme: Theme) -> str:
     x, fr, h = theme.text_x, theme.frame_right, 80
     handle = profile.handle
     if theme.uses_chevron_prompt:
-        msg = f"{handle} · {theme.spec['footer_status'].lower()}" if theme.scifi_labels else f"{handle} · end of transmission"
+        msg = f"{handle} · {theme.spec['footer_status'].lower()}" if theme.themed_labels else f"{handle} · end of transmission"
         tag = theme.spec["footer_tag"]
         text = msg + tag
         body = (

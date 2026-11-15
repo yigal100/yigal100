@@ -247,7 +247,7 @@ def update_readme(
             mode_override=mode,
             strategy_override=strategy,
         )
-    theme = Theme.from_preset(resolved_name, scifi_labels=cfg.theme.scifi_labels)
+    theme = Theme.from_preset(resolved_name, themed_labels=cfg.theme.themed_labels)
     stats = json.loads((paths.data_dir / "stats.json").read_text(encoding="utf-8"))
     articles = json.loads((paths.data_dir / "articles.json").read_text(encoding="utf-8"))
     cal_file = paths.data_dir / "calendar.json"

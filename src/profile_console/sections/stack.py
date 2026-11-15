@@ -12,7 +12,7 @@ def build_stack(stack: tuple[StackCategory, ...], theme: Theme) -> str:
     max_x = theme.frame_right - 36
     sec_title = theme.section_label("stack")
     if theme.uses_chevron_prompt:
-        sub = "systems & knowledge clusters" if theme.scifi_labels else "capabilities & tooling"
+        sub = "systems & knowledge clusters" if theme.themed_labels else "capabilities & tooling"
         parts = [
             heading(44, sec_title, "// 05", theme),
             f'<g class="ln" style="animation-delay:.15s"><text x="{x0}" y="96" class="dim">'

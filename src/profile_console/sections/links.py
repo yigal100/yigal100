@@ -31,7 +31,7 @@ def build_links_head(profile: ProfileInfo, theme: Theme) -> str:
     x = theme.text_x
     sec_title = theme.section_label("links")
     if theme.uses_chevron_prompt:
-        sub = f"active relays · {profile.handle}" if theme.scifi_labels else f"channels · {profile.handle}"
+        sub = f"active relays · {profile.handle}" if theme.themed_labels else f"channels · {profile.handle}"
         body = (
             heading(44, sec_title, "// 01", theme)
             + f'''

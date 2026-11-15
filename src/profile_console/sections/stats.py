@@ -57,7 +57,7 @@ def build_stats(d: dict, profile: ProfileInfo, theme: Theme) -> str:
     yrs = (y - since).days // 365
     sec_title = theme.section_label("stats")
     if theme.uses_chevron_prompt:
-        sub_cmd = f"sensor array · {profile.handle}" if theme.scifi_labels else f"github telemetry · {profile.handle}"
+        sub_cmd = f"sensor array · {profile.handle}" if theme.themed_labels else f"github telemetry · {profile.handle}"
         parts = [
             heading(44, sec_title, "// 02", theme),
             f'<g class="ln" style="animation-delay:.15s"><text x="{x}" y="96" class="dim">'

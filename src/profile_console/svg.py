@@ -107,7 +107,7 @@ class Theme:
 
     preset: str = "cyberpunk"
     variant: str = "dark"
-    scifi_labels: bool = False
+    themed_labels: bool = False
     bg: str = "#03040a"
     surface: str = "#090d16"
     surface_alt: str = "#11161d"
@@ -132,7 +132,7 @@ class Theme:
         preset: str = "cyberpunk",
         variant: str = "dark",
         *,
-        scifi_labels: bool = False,
+        themed_labels: bool = False,
         fonts_dir: pathlib.Path | None = None,
     ) -> Theme:
         """Build a Theme from a named preset and light/dark variant."""
@@ -144,7 +144,7 @@ class Theme:
         return cls(
             preset=preset,
             variant=variant,
-            scifi_labels=scifi_labels,
+            themed_labels=themed_labels,
             fonts_dir=resolved_fonts,
             **palette,
         )
@@ -177,7 +177,7 @@ class Theme:
     def section_label(self, key: str, default: str | None = None) -> str:
         """Return the theme's custom section label when themed labels are enabled, else default."""
         fallback = default if default is not None else key
-        if not self.scifi_labels:
+        if not self.themed_labels:
             return fallback
         return self.spec["labels"].get(key, fallback)
 

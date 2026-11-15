@@ -11,7 +11,7 @@ def build_reading_head(theme: Theme, section_num: int = 6) -> str:
     num = f"// {section_num:02d}"
     sec_title = theme.section_label("reading")
     if theme.uses_chevron_prompt:
-        sub = "recommended reading & transmissions" if theme.scifi_labels else "recommended reading & references"
+        sub = "recommended reading & transmissions" if theme.themed_labels else "recommended reading & references"
         body = (
             heading(44, sec_title, num, theme)
             + f'''

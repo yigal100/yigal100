@@ -166,7 +166,7 @@ class ThemeConfig:
     """Theme rendering settings loaded from profile.toml."""
 
     mode: str = "adaptive"
-    scifi_labels: bool = False
+    themed_labels: bool = False
 
     @classmethod
     def from_dict(cls, raw: dict | None) -> ThemeConfig:
@@ -175,10 +175,9 @@ class ThemeConfig:
         mode = str(raw.get("mode", "adaptive")).strip().lower()
         if mode not in VALID_MODES:
             raise ValueError(f"Unknown theme mode {mode!r}; expected one of {VALID_MODES}")
-        themed_labels = raw.get("themed_labels", raw.get("scifi_labels", False))
         return cls(
             mode=mode,
-            scifi_labels=bool(themed_labels),
+            themed_labels=bool(raw.get("themed_labels", False)),
         )
 
     def resolve(

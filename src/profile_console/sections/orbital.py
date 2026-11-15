@@ -198,7 +198,7 @@ def build_orbital(calendar: list[list], updated: str, theme: Theme) -> str:
     sec_title = theme.section_label("centerpiece", "orbital-activity")
     sub_line = (
         "astrometrics · 3d orbital telemetry · last 365 days"
-        if theme.scifi_labels
+        if theme.themed_labels
         else "3d orbital activity · last 365 days"
     )
 

@@ -133,7 +133,7 @@ def render_svgs(
             theme = Theme.from_preset(
                 resolved_name,
                 variant,
-                scifi_labels=cfg.theme.scifi_labels,
+                themed_labels=cfg.theme.themed_labels,
                 fonts_dir=paths.fonts_dir,
             )
             _render_variant(cfg, paths, stats, articles, icons, calendar, theme, suffix=f"-{variant}")
@@ -141,14 +141,14 @@ def render_svgs(
         theme = Theme.from_preset(
             resolved_name,
             resolved_mode,
-            scifi_labels=cfg.theme.scifi_labels,
+            themed_labels=cfg.theme.themed_labels,
             fonts_dir=paths.fonts_dir,
         )
         _render_variant(cfg, paths, stats, articles, icons, calendar, theme)
 
     paths.assets_dir.mkdir(parents=True, exist_ok=True)
     (paths.assets_dir / ".theme.json").write_text(
-        json.dumps({"name": resolved_name, "mode": resolved_mode, "scifi_labels": cfg.theme.scifi_labels}, indent=2)
+        json.dumps({"name": resolved_name, "mode": resolved_mode, "themed_labels": cfg.theme.themed_labels}, indent=2)
         + "\n",
         encoding="utf-8",
     )

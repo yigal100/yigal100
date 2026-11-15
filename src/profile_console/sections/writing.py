@@ -12,7 +12,7 @@ def build_writing_head(theme: Theme) -> str:
     """Render the ~/writing section header."""
     sec_title = theme.section_label("writing")
     if theme.uses_chevron_prompt:
-        sub = "recent transmissions & insights" if theme.scifi_labels else "recommended reading & insights"
+        sub = "recent transmissions & insights" if theme.themed_labels else "recommended reading & insights"
         body = (
             heading(44, sec_title, "// 06", theme)
             + f'''

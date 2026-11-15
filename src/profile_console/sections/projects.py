@@ -14,7 +14,7 @@ def build_projects_head(theme: Theme) -> str:
     """Render the ~/projects section header."""
     sec_title = theme.section_label("projects")
     if theme.uses_chevron_prompt:
-        sub = "active mission dossiers" if theme.scifi_labels else "featured repositories"
+        sub = "active mission dossiers" if theme.themed_labels else "featured repositories"
         body = (
             heading(44, sec_title, "// 04", theme)
             + f'''
