@@ -9,86 +9,122 @@ from profile_console.svg import Theme, heading, slice_svg
 
 
 def build_aurora(calendar: list[list], updated: str, theme: Theme) -> str:
-    """Render a multi-band harmonic aurora over a fjord silhouette with water reflection."""
+    """Render floating Aurora Borealis light curtains over a fjord silhouette with water reflection."""
     x0, fr = theme.text_x, theme.frame_right
     weeks, total, active_days, busiest = weekly_buckets(calendar)
     peak_w = max((n for _, n in weeks), default=1) or 1
 
     chart_x0, chart_w = x0 + 10.0, 540.0
-    horizon_y = 388.0
-    band_specs = [
-        (theme.violet, 0.20, 0.72, 200.0, 0.0),
-        (theme.cyan, 0.25, 0.86, 160.0, 0.9),
-        (theme.green, 0.28, 0.94, 122.0, 1.8),
+    horizon_y = 392.0
+    n_weeks = max(len(weeks) - 1, 1)
+
+    # Vertical gradients: vivid green/cyan at lower curtain edge fading upward into violet/transparent
+    defs = (
+        f'<linearGradient id="aur-g0" x1="0" y1="1" x2="0" y2="0">'
+        f'<stop offset="0%" stop-color="{theme.green}" stop-opacity="{0.42 if theme.is_light else 0.58}"/>'
+        f'<stop offset="45%" stop-color="{theme.cyan}" stop-opacity="{0.22 if theme.is_light else 0.32}"/>'
+        f'<stop offset="100%" stop-color="{theme.violet}" stop-opacity="0"/>'
+        f"</linearGradient>"
+        f'<linearGradient id="aur-g1" x1="0" y1="1" x2="0" y2="0">'
+        f'<stop offset="0%" stop-color="{theme.cyan}" stop-opacity="{0.36 if theme.is_light else 0.52}"/>'
+        f'<stop offset="55%" stop-color="{theme.violet}" stop-opacity="{0.18 if theme.is_light else 0.28}"/>'
+        f'<stop offset="100%" stop-color="{theme.violet}" stop-opacity="0"/>'
+        f"</linearGradient>"
+        f'<linearGradient id="aur-refl" x1="0" y1="0" x2="0" y2="1">'
+        f'<stop offset="0%" stop-color="{theme.green}" stop-opacity="{0.24 if theme.is_light else 0.34}"/>'
+        f'<stop offset="65%" stop-color="{theme.cyan}" stop-opacity="0.08"/>'
+        f'<stop offset="100%" stop-color="{theme.bg}" stop-opacity="0"/>'
+        f"</linearGradient>"
+    )
+
+    # Subtle arctic night stars in the upper sky
+    stars: list[str] = []
+    for s_idx in range(28):
+        sx = chart_x0 + ((s_idx * 73 + 19) % 530)
+        sy = 128.0 + ((s_idx * 47 + 11) % 210)
+        sr = 0.7 if s_idx % 3 else 1.1
+        stars.append(
+            f'<circle cx="{sx:.1f}" cy="{sy:.1f}" r="{sr}" fill="{theme.dim}" opacity="{0.22 + (s_idx % 4) * 0.1:.2f}"/>'
+        )
+
+    # Two sweeping, floating aurora borealis curtains (back veil + front bright curtain)
+    curtain_specs = [
+        ("aur-g1", theme.cyan, 294.0, 128.0, 0.0, 0.55),
+        ("aur-g0", theme.green, 326.0, 142.0, 1.35, 0.90),
     ]
 
     ribbons: list[str] = []
-    # Subtle horizontal altitude ticks
-    for frac, label in ((0.33, "LOW"), (0.66, "MID"), (1.0, "PEAK")):
-        gy = horizon_y - frac * 205.0
-        ribbons.append(
-            f'<line x1="{chart_x0:.1f}" y1="{gy:.1f}" x2="{chart_x0 + chart_w:.1f}" y2="{gy:.1f}" '
-            f'stroke="{theme.border}" stroke-dasharray="3 5" stroke-opacity=".55"/>'
-            f'<text x="{chart_x0:.1f}" y="{gy - 5:.1f}" class="dim" style="font-size:9px">{label}</text>'
-        )
-
-    n_weeks = max(len(weeks) - 1, 1)
+    rays: list[str] = []
     peak_markers: list[str] = []
-    curtains: list[str] = []
     reflection_pts: list[tuple[float, float]] = []
 
-    for band_idx, (col, fill_op, stroke_op, max_amp, phase) in enumerate(band_specs):
-        pts: list[tuple[float, float]] = []
+    for c_idx, (grad_id, edge_col, base_sky_y, max_curtain_h, phase, edge_op) in enumerate(curtain_specs):
+        lower_pts: list[tuple[float, float]] = []
+        upper_pts: list[tuple[float, float]] = []
+
         for i, (_, val) in enumerate(weeks):
             px = chart_x0 + (i / n_weeks) * chart_w
             norm = math.sqrt(val / peak_w) if val > 0 else 0.0
-            harmonic = 0.82 + 0.18 * math.sin(i * 0.45 + phase)
-            py = horizon_y - max_amp * norm * harmonic
-            pts.append((px, py))
+            # Graceful S-curve drift across the arctic sky
+            drift = 22.0 * math.sin(i * 0.16 + phase) + 9.0 * math.cos(i * 0.34 - phase)
+            y_low = base_sky_y + drift
+            curtain_h = 26.0 + max_curtain_h * (0.22 + 0.78 * norm) * (0.85 + 0.15 * math.sin(i * 0.4 + phase))
+            y_high = max(124.0, y_low - curtain_h)
 
-            # Vertical aurora curtain striations on upper bands
-            if band_idx in (1, 2) and val > 0 and i % 2 == 0:
-                ray_h = 18.0 + 28.0 * norm
-                curtains.append(
-                    f'<line x1="{px:.1f}" y1="{py:.1f}" x2="{px:.1f}" y2="{max(132.0, py - ray_h):.1f}" '
-                    f'stroke="{col}" stroke-width="1.4" stroke-opacity="{0.14 + 0.22 * norm:.2f}"/>'
+            lower_pts.append((px, y_low))
+            upper_pts.append((px, y_high))
+
+            # Shimmering vertical light striations inside the curtain
+            if val > 0:
+                ray_col = theme.green if (c_idx == 1 and i % 3 != 0) else theme.cyan
+                rays.append(
+                    f'<line x1="{px:.1f}" y1="{y_low:.1f}" x2="{px:.1f}" y2="{y_high + 6.0:.1f}" '
+                    f'stroke="{ray_col}" stroke-width="1.5" stroke-opacity="{0.10 + 0.24 * norm:.2f}"/>'
                 )
-            if band_idx == 2:
-                reflection_pts.append((px, horizon_y + 6.0 + 42.0 * norm * harmonic))
+
+            if c_idx == 1:
+                reflection_pts.append((px, horizon_y + 10.0 + 48.0 * norm))
                 if val >= peak_w * 0.65:
                     peak_markers.append(
-                        f'<circle cx="{px:.1f}" cy="{py:.1f}" r="3.2" fill="{theme.accent_color}"/>'
-                        f'<circle cx="{px:.1f}" cy="{py:.1f}" r="6.5" fill="none" stroke="{theme.accent_color}" stroke-opacity=".45"/>'
+                        f'<circle cx="{px:.1f}" cy="{y_low:.1f}" r="3.0" fill="{theme.accent_color}"/>'
+                        f'<circle cx="{px:.1f}" cy="{y_low:.1f}" r="6.5" fill="none" stroke="{theme.accent_color}" stroke-opacity=".45"/>'
                     )
 
-        curve = smooth_path(pts)
-        area = f"{curve}L{chart_x0 + chart_w:.1f},{horizon_y:.1f}L{chart_x0:.1f},{horizon_y:.1f}Z"
+        low_curve = smooth_path(lower_pts)
+        high_rev = list(reversed(upper_pts))
+        high_curve_cmds = smooth_path(high_rev).replace("M", "L", 1)
+        curtain_d = f"{low_curve}{high_curve_cmds}Z"
         ribbons.append(
-            f'<path d="{area}" fill="{col}" fill-opacity="{fill_op * (0.75 if theme.is_light else 1.0):.2f}"/>'
-            f'<path d="{curve}" fill="none" stroke="{col}" stroke-width="2" stroke-opacity="{stroke_op:.2f}"/>'
+            f'<path d="{curtain_d}" fill="url(#{grad_id})"/>'
+            f'<path d="{low_curve}" fill="none" stroke="{edge_col}" stroke-width="2.1" stroke-opacity="{edge_op:.2f}"/>'
         )
 
     # Fjord mountain silhouette along the horizon
     ridge_pts = [
-        (0.00, 0), (0.08, 18), (0.17, 10), (0.26, 28), (0.35, 14),
-        (0.46, 8), (0.57, 24), (0.68, 12), (0.79, 31), (0.90, 15), (1.00, 0),
+        (0.00, 0), (0.08, 22), (0.17, 11), (0.26, 32), (0.35, 16),
+        (0.46, 9), (0.57, 27), (0.68, 13), (0.79, 35), (0.90, 17), (1.00, 0),
     ]
     mtn_d = "M" + "L".join(f"{chart_x0 + fx * chart_w:.1f},{horizon_y - dy:.1f}" for fx, dy in ridge_pts) + "Z"
-    mtn_col = "#cbd5e1" if theme.is_light else "#091018"
+    mtn_col = "#cbd5e1" if theme.is_light else "#070c14"
     fjord = (
         f'<path d="{mtn_d}" fill="{mtn_col}" stroke="{theme.border}" stroke-width="1"/>'
         f'<line x1="{chart_x0:.1f}" y1="{horizon_y:.1f}" x2="{chart_x0 + chart_w:.1f}" y2="{horizon_y:.1f}" '
         f'stroke="{theme.cyan}" stroke-width="1.1" stroke-opacity=".55"/>'
     )
 
-    # Subtle water reflection below the horizon
+    # Calm fjord water reflection below the horizon
     if reflection_pts:
         refl_curve = smooth_path(reflection_pts)
-        refl_area = f"{refl_curve}L{chart_x0 + chart_w:.1f},{horizon_y + 4:.1f}L{chart_x0:.1f},{horizon_y + 4:.1f}Z"
-        fjord += (
-            f'<path d="{refl_area}" fill="{theme.cyan}" fill-opacity=".08"/>'
-            f'<path d="{refl_curve}" fill="none" stroke="{theme.cyan}" stroke-width="1" stroke-opacity=".28" stroke-dasharray="4 3"/>'
-        )
+        refl_area = f"{refl_curve}L{chart_x0 + chart_w:.1f},{horizon_y + 2:.1f}L{chart_x0:.1f},{horizon_y + 2:.1f}Z"
+        fjord += f'<path d="{refl_area}" fill="url(#aur-refl)"/>'
+        for r_idx in range(4):
+            ry = horizon_y + 10.0 + r_idx * 11.0
+            fjord += (
+                f'<line x1="{chart_x0 + 24 + r_idx * 18:.1f}" y1="{ry:.1f}" '
+                f'x2="{chart_x0 + chart_w - 28 - r_idx * 14:.1f}" y2="{ry:.1f}" '
+                f'stroke="{theme.green if r_idx % 2 == 0 else theme.cyan}" stroke-width=".8" '
+                f'stroke-dasharray="14 10 6 14" stroke-opacity="{0.26 - r_idx * 0.05:.2f}"/>'
+            )
 
     rx_card = 626
     rw = (fr - 36) - rx_card
@@ -104,17 +140,18 @@ def build_aurora(calendar: list[list], updated: str, theme: Theme) -> str:
     body = (
         heading(44, sec_title, "// 03", theme)
         + f'''
-<g class="ln" style="animation-delay:.15s"><text x="{x0}" y="96" class="dim"><tspan class="cy">›</tspan> harmonic aurora · fjord reflection · 52w</text></g>
-<g>{"".join(curtains)}{"".join(ribbons)}{fjord}{"".join(peak_markers)}</g>
+<g class="ln" style="animation-delay:.15s"><text x="{x0}" y="96" class="dim"><tspan class="cy">›</tspan> aurora borealis · fjord reflection · 52w</text></g>
+<g>{"".join(stars)}{"".join(ribbons)}{"".join(rays)}{fjord}{"".join(peak_markers)}</g>
 {telemetry}'''
     )
     return slice_svg(
         520,
         body,
         title="Fjord aurora",
-        desc=f"Harmonic aurora ribbons over a fjord of the last 365 days: {total:,} contributions across {active_days} active days.",
-        text=f"{sec_title}03harmonic aurorafjord reflection52wLOWMIDPEAKTOTAL OUTPUTACTIVE DAYSPEAK CREST{total}{active_days}{busiest_val}",
+        desc=f"Aurora borealis light curtains over a fjord of the last 365 days: {total:,} contributions across {active_days} active days.",
+        text=f"{sec_title}03aurora borealisfjord reflection52wTOTAL OUTPUTACTIVE DAYSPEAK CREST{total}{active_days}{busiest_val}",
         theme=theme,
+        defs=defs,
     )
 
 

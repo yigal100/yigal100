@@ -1,0 +1,56 @@
+# Origami theme: Indigo Sumi (dark) & Washi Paper (light)
+
+card_rx = 0
+card_style = "surface"
+prompt_style = "chevron"
+header_motif = "bars"
+accent = "magenta"
+grid_style = "none"
+frame_style = "clean"
+heading_style = "block"
+use_glow = false
+centerpiece = "origami"
+centerpiece_stem = "origami-folds"
+centerpiece_alt = "Origami Kusudama: a 12-module folded paper star polyhedron of the last 365 days."
+kicker = "ORIGAMI // WASHI FOLIO"
+footer_status = "CREASED & BALANCED · PAPER & INK"
+footer_tag = "WASHI // FOLD"
+
+[labels]
+links = "seals"
+stats = "balance"
+centerpiece = "kusudama"
+projects = "creations"
+stack = "craft"
+writing = "notes"
+reading = "scrolls"
+
+[palettes.dark]
+bg = "#0d121b"
+surface = "#141b28"
+surface_alt = "#1c2536"
+border = "#2c374c"
+fg = "#e8e3d9"
+wh = "#faf7f0"
+dim = "#9ca3b5"
+muted = "#647084"
+cyan = "#4fb3a2"
+magenta = "#e05344"
+green = "#6bb886"
+amber = "#dfb458"
+violet = "#9b8cd6"
+
+[palettes.light]
+bg = "#f6f2e9"
+surface = "#fcfaf4"
+surface_alt = "#eae3d4"
+border = "#d4cab6"
+fg = "#1c222e"
+wh = "#0f141d"
+dim = "#565e6d"
+muted = "#989da8"
+cyan = "#1d7a6c"
+magenta = "#c23b2b"
+green = "#2e7d4f"
+amber = "#a67518"
+violet = "#5e4da6"

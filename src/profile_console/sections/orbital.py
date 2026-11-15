@@ -139,15 +139,52 @@ def build_orbital(calendar: list[list], updated: str, theme: Theme) -> str:
         color = ring_colors[level]
         radius = 2.0 + 4.4 * math.sqrt(n / max(peak, 1))
         op = 0.95 if is_front else 0.65
+        tw_cls = f' s{i % 3}'
         parts = []
+
+        # Soft galactic corona halo on brighter stars (level 2+)
+        if level >= 2:
+            halo_op = 0.12 if theme.is_light else 0.18
+            parts.append(
+                f'<circle class="{tw_cls.strip()}" cx="{px:.1f}" cy="{py:.1f}" r="{radius * 1.95:.1f}" '
+                f'fill="{color}" opacity="{halo_op if is_front else halo_op * 0.6:.2f}"/>'
+            )
+
+        # Pulse ring on supernova stars (level 3)
         if level == 3:
             parts.append(
                 f'<circle class="pulse-node" cx="{px:.1f}" cy="{py:.1f}" r="{radius + 3.5:.1f}" '
                 f'fill="none" stroke="{color}" stroke-opacity=".45" stroke-width="1"/>'
             )
+
+        # Base star disc
         parts.append(
             f'<circle cx="{px:.1f}" cy="{py:.1f}" r="{radius:.1f}" fill="{color}" opacity="{op:.2f}"/>'
         )
+
+        # Luminous white-hot stellar core on active stars (level 1+)
+        if level >= 1:
+            core_r = max(0.75, radius * 0.34)
+            core_op = (0.72 if theme.is_light else 0.9) * (1.0 if is_front else 0.7)
+            parts.append(
+                f'<circle cx="{px:.1f}" cy="{py:.1f}" r="{core_r:.2f}" fill="{theme.wh}" opacity="{core_op:.2f}"/>'
+            )
+
+        # 4-point diffraction sparkle spikes on level 2+ stars
+        if level >= 2:
+            arm = radius * (2.65 if level == 3 else 1.85)
+            waist = max(0.55, radius * 0.22)
+            flare_op = (0.78 if level == 3 else 0.48) * (1.0 if is_front else 0.65)
+            flare_col = theme.wh if (level == 3 and not theme.is_light) else color
+            flare_d = (
+                f"M{px:.1f},{py - arm:.1f}"
+                f"L{px + waist:.1f},{py - waist:.1f}L{px + arm:.1f},{py:.1f}"
+                f"L{px + waist:.1f},{py + waist:.1f}L{px:.1f},{py + arm:.1f}"
+                f"L{px - waist:.1f},{py + waist:.1f}L{px - arm:.1f},{py:.1f}"
+                f"L{px - waist:.1f},{py - waist:.1f}Z"
+            )
+            parts.append(f'<path class="{tw_cls.strip()}" d="{flare_d}" fill="{flare_col}" opacity="{flare_op:.2f}"/>')
+
         (front_nodes if is_front else back_nodes).extend(parts)
         prev_ring = ring_idx
         prev_pt = (px, py, depth)

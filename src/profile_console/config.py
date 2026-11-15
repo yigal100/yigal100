@@ -165,6 +165,7 @@ class ThemeName(StrEnum):
     CYBERPUNK = "cyberpunk"
     MONOCHROME_INK = "monochrome-ink"
     NORDIC_FJORD = "nordic-fjord"
+    ORIGAMI = "origami"
     RETRO_AMBER = "retro-amber"
     SOLARPUNK = "solarpunk"
     STUDIO = "studio"

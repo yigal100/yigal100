@@ -23,6 +23,7 @@ from profile_console.sections.header import build_footer, build_header
 from profile_console.sections.links import build_link_button, build_links_head
 from profile_console.sections.monochrome import build_joyplot
 from profile_console.sections.orbital import build_orbital
+from profile_console.sections.origami import build_origami
 from profile_console.sections.projects import build_card, build_projects_head
 from profile_console.sections.reading import build_reading_head, build_reading_row
 from profile_console.sections.solarpunk import build_rings
@@ -43,6 +44,7 @@ CENTERPIECE_BUILDERS = {
     "outrun": build_outrun,
     "joyplot": build_joyplot,
     "rings": build_rings,
+    "origami": build_origami,
 }
 
 

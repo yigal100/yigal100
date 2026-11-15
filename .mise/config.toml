@@ -39,7 +39,7 @@ flag "-d --data <dir>" help="Folder with stats.json and articles.json (default: 
 flag "-o --out <dir>" help="Folder to write the SVGs into (default: assets, or preview with --all)"
 flag "-c --config <file>" help="Path to profile.toml (default: profile.toml)"
 flag "-t --theme <name>" help="Override theme preset (default: from strategy)" {
-  choices "arcane-architect" "astrometrics" "cyberpunk" "monochrome-ink" "nordic-fjord" "retro-amber" "solarpunk" "studio" "synthwave"
+  choices "arcane-architect" "astrometrics" "cyberpunk" "monochrome-ink" "nordic-fjord" "origami" "retro-amber" "solarpunk" "studio" "synthwave"
 }
 flag "-m --mode <mode>" help="Override color mode (default: from profile.toml)" {
   choices "dark" "light" "adaptive"
@@ -72,7 +72,7 @@ description = "Synchronize dynamic README.md blocks"
 usage = '''
 flag "-d --data <dir>" help="Folder with stats.json and articles.json (default: data)"
 flag "-t --theme <name>" help="Override theme preset (default: from .theme.json or strategy)" {
-  choices "arcane-architect" "astrometrics" "cyberpunk" "monochrome-ink" "nordic-fjord" "retro-amber" "solarpunk" "studio" "synthwave"
+  choices "arcane-architect" "astrometrics" "cyberpunk" "monochrome-ink" "nordic-fjord" "origami" "retro-amber" "solarpunk" "studio" "synthwave"
 }
 flag "-m --mode <mode>" help="Override color mode (default: from .theme.json or profile.toml)" {
   choices "dark" "light" "adaptive"
@@ -90,7 +90,7 @@ flag "-d --data <dir>" help="Folder with stats.json and articles.json (default: 
 flag "-o --out <dir>" help="Folder to write the SVGs into (default: assets)"
 flag "-c --config <file>" help="Path to profile.toml (default: profile.toml)"
 flag "-t --theme <name>" help="Override theme preset (default: from strategy)" {
-  choices "arcane-architect" "astrometrics" "cyberpunk" "monochrome-ink" "nordic-fjord" "retro-amber" "solarpunk" "studio" "synthwave"
+  choices "arcane-architect" "astrometrics" "cyberpunk" "monochrome-ink" "nordic-fjord" "origami" "retro-amber" "solarpunk" "studio" "synthwave"
 }
 flag "-m --mode <mode>" help="Override color mode (default: from profile.toml)" {
   choices "dark" "light" "adaptive"
@@ -112,7 +112,7 @@ flag "-d --data <dir>" help="Folder with stats.json and articles.json (default: 
 flag "-o --out <dir>" help="Folder to write the SVGs into (default: assets)"
 flag "-c --config <file>" help="Path to profile.toml (default: profile.toml)"
 flag "-t --theme <name>" help="Override theme preset (default: from strategy)" {
-  choices "arcane-architect" "astrometrics" "cyberpunk" "monochrome-ink" "nordic-fjord" "retro-amber" "solarpunk" "studio" "synthwave"
+  choices "arcane-architect" "astrometrics" "cyberpunk" "monochrome-ink" "nordic-fjord" "origami" "retro-amber" "solarpunk" "studio" "synthwave"
 }
 flag "-m --mode <mode>" help="Override color mode (default: from profile.toml)" {
   choices "dark" "light" "adaptive"
