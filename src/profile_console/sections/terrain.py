@@ -144,7 +144,8 @@ def build_spectrum(calendar: list[list], updated: str, theme: Theme) -> str:
         f'stroke="{theme.border}" stroke-width="1.5"/>'
     )
 
-    # 4-week moving average points + signal bars
+    # 4-week moving average points + 3D extruded oblique hardware signal bars
+    dx3, dy3 = 4.2, -4.2
     ma_pts: list[tuple[float, float]] = []
     for i, (_, val) in enumerate(weeks):
         x = bx0 + i * step
@@ -161,13 +162,22 @@ def build_spectrum(calendar: list[list], updated: str, theme: Theme) -> str:
         h = max(8.0, max_h * (val / peak_w))
         ratio = val / peak_w
         col = theme.cyan if ratio >= 0.65 else (theme.magenta if ratio >= 0.3 else theme.fg)
+        yt = by_base - h
+        xr = x + bar_w
+        # Front face, shaded right face, and lit top cap
         parts.append(
-            f'<rect x="{x:.1f}" y="{by_base - h:.1f}" width="{bar_w:.1f}" height="{h:.1f}" rx="1" fill="{col}" fill-opacity=".88"/>'
+            f'<rect x="{x:.1f}" y="{yt:.1f}" width="{bar_w:.1f}" height="{h:.1f}" fill="{col}" fill-opacity=".86"/>'
+            f'<polygon points="{xr:.1f},{yt:.1f} {xr + dx3:.1f},{yt + dy3:.1f} {xr + dx3:.1f},{by_base + dy3:.1f} {xr:.1f},{by_base:.1f}" '
+            f'fill="{col}" fill-opacity=".46"/>'
+            f'<polygon points="{x:.1f},{yt:.1f} {x + dx3:.1f},{yt + dy3:.1f} {xr + dx3:.1f},{yt + dy3:.1f} {xr:.1f},{yt:.1f}" '
+            f'fill="{col}" fill-opacity=".64"/>'
         )
-        # Peak-hold cap tick above top bars
+        # 3D floating peak-hold cap above top bars
         if ratio >= 0.65:
+            yc = yt - 6.0
             parts.append(
-                f'<rect x="{x:.1f}" y="{by_base - h - 5:.1f}" width="{bar_w:.1f}" height="2" fill="{theme.amber}"/>'
+                f'<polygon points="{x:.1f},{yc:.1f} {x + dx3:.1f},{yc + dy3:.1f} {xr + dx3:.1f},{yc + dy3:.1f} {xr:.1f},{yc:.1f}" '
+                f'fill="{theme.amber}"/>'
             )
 
     # Quarter vernier ticks along baseline
