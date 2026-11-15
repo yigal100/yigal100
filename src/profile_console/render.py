@@ -21,11 +21,14 @@ from profile_console.sections.aurora import build_aurora, build_radar
 from profile_console.sections.city import build_city
 from profile_console.sections.header import build_footer, build_header
 from profile_console.sections.links import build_link_button, build_links_head
+from profile_console.sections.monochrome import build_joyplot
 from profile_console.sections.orbital import build_orbital
 from profile_console.sections.projects import build_card, build_projects_head
 from profile_console.sections.reading import build_reading_head, build_reading_row
+from profile_console.sections.solarpunk import build_rings
 from profile_console.sections.stack import build_stack
 from profile_console.sections.stats import build_stats
+from profile_console.sections.synthwave import build_outrun
 from profile_console.sections.terrain import build_spectrum, build_terrain
 from profile_console.sections.writing import build_article_row, build_writing_head, build_writing_more
 from profile_console.svg import Theme
@@ -37,6 +40,9 @@ CENTERPIECE_BUILDERS = {
     "city": build_city,
     "aurora": build_aurora,
     "radar": build_radar,
+    "outrun": build_outrun,
+    "joyplot": build_joyplot,
+    "rings": build_rings,
 }
 
 
