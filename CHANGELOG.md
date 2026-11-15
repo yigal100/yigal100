@@ -6,6 +6,32 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 and [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [0.2.0] - 2026-11-15
+
+### Bug Fixes
+
+- Adjust circle positions in header SVGs and update dotx calculation in header.py
+
+### Features
+
+- **reading**: Separate recommended reading from own writing
+- **fetch**: Add public calendar fallback when org blocks PAT
+- **theme**: Add arcane-architect and studio themes with CLI overrides and rotation strategy
+- **header**: Add alignment badge to cyberpunk header
+- **theme**: Add aurora/radar centerpieces and 5 new themes
+- **cli**: Add short flags, enum choices, and preview-all task
+- **themes**: Add bespoke centerpieces and 3d upgrades
+- **themes**: Add origami theme and enhance astrometrics and aurora
+- **studio**: Extrude signal spectrum bars into 3d prisms
+- **themes**: Add gentle 3d depth to solarpunk and crt details to retro-amber
+
+### Refactoring
+
+- **theme**: Generalize data-driven theme specs and add light/adaptive support for cyberpunk
+- **theme**: Extract theme definitions into TOML config files
+- **config**: Simplify [theme] block and keep theme selection on CLI
+- Replace theme preset booleans with spec fields
+- Rename scifi_labels to themed_labels
 ## [0.1.0] - 2026-11-14
 
 ### Documentation
