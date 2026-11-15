@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import datetime
+import math
 
 from profile_console.svg import Theme, esc
 
@@ -76,3 +77,21 @@ def smooth_path(pts: list[tuple[float, float]]) -> str:
         mx = (x0 + x1) / 2
         cmds.append(f"C{mx:.1f},{y0:.1f} {mx:.1f},{y1:.1f} {x1:.1f},{y1:.1f}")
     return "".join(cmds)
+
+
+def project_tilted(
+    cx: float,
+    cy: float,
+    r: float,
+    theta: float,
+    tilt: float = 0.48,
+    roll_deg: float = -8.0,
+) -> tuple[float, float, float]:
+    """Project polar (r, theta) onto a tilted 3D-perspective plane, returning (x, y, depth)."""
+    lx = r * math.cos(theta)
+    ly = r * tilt * math.sin(theta)
+    roll = math.radians(roll_deg)
+    cos_r, sin_r = math.cos(roll), math.sin(roll)
+    px = cx + lx * cos_r - ly * sin_r
+    py = cy + lx * sin_r + ly * cos_r
+    return px, py, math.sin(theta)

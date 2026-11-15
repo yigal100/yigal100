@@ -162,16 +162,48 @@ def build_radar(calendar: list[list], updated: str, theme: Theme) -> str:
     peak_w = max((n for _, n in weeks), default=1) or 1
 
     cx, cy = 320.0, 304.0
-    r_inner, r_outer = 34.0, 168.0
+    r_inner, r_outer = 34.0, 162.0
+    r_daily = r_outer + 9.5
     accent = theme.accent_color
 
+    # Phosphor CRT vignette gradient inside the circular scope
+    defs = (
+        f'<radialGradient id="crt-vig" cx="50%" cy="50%" r="50%">'
+        f'<stop offset="0%" stop-color="{accent}" stop-opacity="{0.08 if theme.is_light else 0.14}"/>'
+        f'<stop offset="70%" stop-color="{accent}" stop-opacity="0.03"/>'
+        f'<stop offset="100%" stop-color="{theme.bg}" stop-opacity="0"/>'
+        f"</radialGradient>"
+    )
+
+    # Chamfered hardware CRT bezel frame with corner mounting screws
+    bx0, by0, bx1, by1, ch = cx - 184.0, cy - 182.0, cx + 184.0, cy + 182.0, 16.0
+    bezel_d = (
+        f"M{bx0 + ch:.1f},{by0:.1f}L{bx1 - ch:.1f},{by0:.1f}L{bx1:.1f},{by0 + ch:.1f}"
+        f"L{bx1:.1f},{by1 - ch:.1f}L{bx1 - ch:.1f},{by1:.1f}L{bx0 + ch:.1f},{by1:.1f}"
+        f"L{bx0:.1f},{by1 - ch:.1f}L{bx0:.1f},{by0 + ch:.1f}Z"
+    )
+    bezel_els = [
+        f'<path d="{bezel_d}" fill="{theme.surface}" fill-opacity=".42" stroke="{theme.border}" stroke-width="1.2"/>',
+        f'<circle cx="{cx:.1f}" cy="{cy:.1f}" r="{r_outer:.1f}" fill="url(#crt-vig)"/>',
+    ]
+    for sx_b, sy_b in ((bx0 + 14, by0 + 14), (bx1 - 14, by0 + 14), (bx0 + 14, by1 - 14), (bx1 - 14, by1 - 14)):
+        bezel_els.append(
+            f'<circle cx="{sx_b:.1f}" cy="{sy_b:.1f}" r="3.2" fill="none" stroke="{theme.border}" stroke-width=".9"/>'
+            f'<line x1="{sx_b - 2:.1f}" y1="{sy_b:.1f}" x2="{sx_b + 2:.1f}" y2="{sy_b:.1f}" stroke="{theme.dim}" stroke-width=".8"/>'
+        )
+
     grid: list[str] = []
-    for frac in (0.25, 0.5, 0.75, 1.0):
+    for frac, label in ((0.25, "25%"), (0.5, "50%"), (0.75, "75%"), (1.0, "")):
         rr = r_inner + frac * (r_outer - r_inner)
         grid.append(
             f'<circle cx="{cx:.1f}" cy="{cy:.1f}" r="{rr:.1f}" fill="none" '
             f'stroke="{theme.border}" stroke-dasharray="{"none" if frac == 1.0 else "3 4"}" stroke-opacity=".8"/>'
         )
+        if label:
+            lx = cx + rr * math.cos(-math.pi / 4) + 3.0
+            ly = cy + rr * math.sin(-math.pi / 4) - 2.0
+            grid.append(f'<text x="{lx:.1f}" y="{ly:.1f}" class="dim" style="font-size:8px">{label}</text>')
+
     for angle_deg in (0, 90, 180, 270):
         rad = math.radians(angle_deg)
         x1 = cx + r_inner * math.cos(rad)
@@ -191,10 +223,24 @@ def build_radar(calendar: list[list], updated: str, theme: Theme) -> str:
                 f'stroke="{theme.border}" stroke-width=".6" stroke-opacity=".24"/>'
             )
 
+    # 365-day outer perimeter cadence ring
+    n_days = max(len(calendar), 1)
+    daily_dots: list[str] = []
+    for d_idx, (_, d_val) in enumerate(calendar):
+        ang = -math.pi / 2 + (2 * math.pi * d_idx) / n_days
+        dx = cx + r_daily * math.cos(ang)
+        dy = cy + r_daily * math.sin(ang)
+        if d_val == 0:
+            daily_dots.append(f'<circle cx="{dx:.1f}" cy="{dy:.1f}" r=".85" fill="{theme.muted}" opacity=".32"/>')
+        else:
+            d_col = accent if d_val >= 8 else theme.cyan
+            daily_dots.append(f'<circle cx="{dx:.1f}" cy="{dy:.1f}" r="1.2" fill="{d_col}" opacity=".85"/>')
+
     n_weeks = max(len(weeks), 1)
     poly_pts: list[tuple[float, float]] = []
     spokes: list[str] = []
     blips: list[str] = []
+    peak_candidates: list[tuple[int, int, float, float, float]] = []
     for i, (_, val) in enumerate(weeks):
         angle = -math.pi / 2 + (2 * math.pi * i) / n_weeks
         norm = math.sqrt(val / peak_w) if val > 0 else 0.0
@@ -211,6 +257,7 @@ def build_radar(calendar: list[list], updated: str, theme: Theme) -> str:
             f'stroke="{col}" stroke-width="2.2" stroke-linecap="round" stroke-opacity="{0.85 if val > 0 else 0.35}"/>'
         )
         if val >= peak_w * 0.65:
+            peak_candidates.append((val, i + 1, px, py, angle))
             # Target-lock crosshair reticle around peak echo blips
             blips.append(
                 f'<circle cx="{px:.1f}" cy="{py:.1f}" r="3.2" fill="{accent}"/>'
@@ -218,6 +265,24 @@ def build_radar(calendar: list[list], updated: str, theme: Theme) -> str:
                 f'<path d="M{px - 10:.1f},{py:.1f}h4M{px + 6:.1f},{py:.1f}h4M{px:.1f},{py - 10:.1f}v4M{px:.1f},{py + 6:.1f}v4" '
                 f'stroke="{accent}" stroke-width="1" stroke-opacity=".7"/>'
             )
+
+    # Target callout leader tags for top 2 peak sectors
+    callouts: list[str] = []
+    peak_candidates.sort(key=lambda item: item[0], reverse=True)
+    for rank, (_, wk_num, px, py, angle) in enumerate(peak_candidates[:2]):
+        dx_dir = 1.0 if math.cos(angle) >= 0 else -1.0
+        dy_dir = 1.0 if math.sin(angle) >= 0 else -1.0
+        ex = px + dx_dir * 16.0
+        ey = py + dy_dir * 14.0
+        tx = ex + dx_dir * 18.0
+        anchor = "start" if dx_dir > 0 else "end"
+        tag = f"PK-0{rank + 1}:W{wk_num:02d}"
+        callouts.append(
+            f'<polyline points="{px:.1f},{py:.1f} {ex:.1f},{ey:.1f} {tx:.1f},{ey:.1f}" '
+            f'fill="none" stroke="{accent}" stroke-width=".9" stroke-opacity=".78"/>'
+            f'<text x="{tx + dx_dir * 3:.1f}" y="{ey + 3:.1f}" text-anchor="{anchor}" '
+            f'fill="{accent}" style="font-size:8.5px;font-weight:700">{tag}</text>'
+        )
 
     poly_str = " ".join(f"{px:.1f},{py:.1f}" for px, py in poly_pts)
     poly_el = (
@@ -230,7 +295,7 @@ def build_radar(calendar: list[list], updated: str, theme: Theme) -> str:
     css = "@keyframes sweep{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}.sweep{transform-origin:320px 304px;animation:sweep 14s linear infinite}"
     # Multi-step fading phosphor persistence trail behind the sweep arm
     trail_wedges: list[str] = []
-    for step_idx, (deg_start, deg_end, op) in enumerate(((0, 16, 0.14), (16, 32, 0.08), (32, 50, 0.04))):
+    for deg_start, deg_end, op in ((0, 16, 0.14), (16, 32, 0.08), (32, 50, 0.04)):
         a0 = -math.pi / 2 + math.radians(deg_start)
         a1 = -math.pi / 2 + math.radians(deg_end)
         x0_s, y0_s = cx + r_outer * math.cos(a0), cy + r_outer * math.sin(a0)
@@ -261,7 +326,7 @@ def build_radar(calendar: list[list], updated: str, theme: Theme) -> str:
         heading(44, sec_title, "// 03", theme)
         + f'''
 <g class="ln" style="animation-delay:.15s"><text x="{x0}" y="96" class="dim">{prompt}</text></g>
-<g>{"".join(scanlines)}{"".join(grid)}{poly_el}{"".join(spokes)}{sweep}{"".join(blips)}</g>
+<g>{"".join(bezel_els)}{"".join(scanlines)}{"".join(grid)}{"".join(daily_dots)}{poly_el}{"".join(spokes)}{sweep}{"".join(blips)}{"".join(callouts)}</g>
 <circle cx="{cx:.1f}" cy="{cy:.1f}" r="4" fill="{accent}"/>
 {telemetry}'''
     )
@@ -270,7 +335,8 @@ def build_radar(calendar: list[list], updated: str, theme: Theme) -> str:
         body,
         title="Contribution radar",
         desc=f"Polar radar sweep of the last 365 days: {total:,} contributions across {active_days} active days.",
-        text=f"{sec_title}03polar sweep52 weekly sectorsradarscan 52wTOTAL SIGNALSACTIVE DAYSPEAK ECHO{total}{active_days}{busiest_val}",
+        text=f"{sec_title}03polar sweep52 weekly sectorsradarscan 52w25%50%75%PK-01PK-02:W0123456789TOTAL SIGNALSACTIVE DAYSPEAK ECHO{total}{active_days}{busiest_val}",
         theme=theme,
         css=css,
+        defs=defs,
     )

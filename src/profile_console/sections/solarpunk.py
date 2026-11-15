@@ -1,46 +1,47 @@
-"""Dendrochronology tree growth rings and canopy nodes slice builder for solarpunk."""
+"""Gently tilted concentric tree growth rings slice builder for solarpunk."""
 
 from __future__ import annotations
 
 import math
 
-from profile_console.sections._common import busiest_summary, telemetry_cards, weekly_buckets
+from profile_console.sections._common import busiest_summary, project_tilted, telemetry_cards, weekly_buckets
 from profile_console.svg import Theme, heading, slice_svg
 
 
 def build_rings(calendar: list[list], updated: str, theme: Theme) -> str:
-    """Render 12 organic concentric tree growth rings and canopy nodes for solarpunk."""
+    """Render 12 gently tilted concentric tree growth rings with subtle depth and canopy nodes."""
     x0, fr = theme.text_x, theme.frame_right
     weeks, total, active_days, busiest = weekly_buckets(calendar)
     peak_w = max((n for _, n in weeks), default=1) or 1
 
-    cx, cy = 320.0, 304.0
-    r_inner, r_outer = 22.0, 162.0
+    cx, cy = 320.0, 308.0
+    r_inner, r_outer = 22.0, 168.0
+    tilt, roll_deg = 0.74, -6.0
     n_rings = 12
     n_samples = 48
 
-    # Split 52 weeks into 12 growth bands (inner = oldest, outer = most recent)
+    # Split 52 weeks into 12 organic growth rings with subtle terraced elevation
     band_size = max(1, math.ceil(len(weeks) / n_rings))
     rings: list[str] = []
-    for ring_idx in range(n_rings):
+    for ring_idx in range(n_rings - 1, -1, -1):
         chunk = weeks[ring_idx * band_size : (ring_idx + 1) * band_size]
         ring_avg = (sum(v for _, v in chunk) / len(chunk)) if chunk else 0.0
         growth_ratio = math.sqrt(ring_avg / peak_w) if ring_avg > 0 else 0.0
         base_r = r_inner + ((ring_idx + 1) / n_rings) * (r_outer - r_inner)
         wobble_amp = 2.0 + 4.5 * growth_ratio
+        # Subtle terraced lift toward the inner heartwood for gentle 3D depth
+        ring_cy = cy - (n_rings - 1 - ring_idx) * 1.1
 
         pts: list[str] = []
         for s in range(n_samples):
             theta = (2 * math.pi * s) / n_samples
-            # Organic dendrochronology undulation deterministic per ring & angle
             undul = (
                 0.55 * math.sin(3 * theta + ring_idx * 0.9)
                 + 0.30 * math.cos(5 * theta - ring_idx * 0.6)
                 + 0.15 * math.sin(7 * theta + ring_idx * 1.3)
             )
             rr = base_r + wobble_amp * undul
-            px = cx + rr * math.cos(theta)
-            py = cy + rr * math.sin(theta)
+            px, py, _ = project_tilted(cx, ring_cy, rr, theta, tilt, roll_deg)
             pts.append(f"{px:.1f},{py:.1f}")
 
         if ring_idx >= 9:
@@ -49,47 +50,52 @@ def build_rings(calendar: list[list], updated: str, theme: Theme) -> str:
             col = theme.cyan
         else:
             col = theme.amber
-        stroke_op = 0.35 + 0.55 * (0.4 + 0.6 * growth_ratio)
+        stroke_op = 0.36 + 0.54 * (0.4 + 0.6 * growth_ratio)
         rings.append(
             f'<polygon points="{" ".join(pts)}" fill="{col}" fill-opacity="{0.03 + 0.04 * growth_ratio:.3f}" '
             f'stroke="{col}" stroke-width="{1.0 + 0.8 * growth_ratio:.2f}" stroke-opacity="{stroke_op:.2f}"/>'
         )
 
-    # 52 weekly vascular rays and outer canopy leaf/seed nodes
+    # 52 weekly vascular rays and outer canopy leaf/seed nodes on the tilted plane
     rays: list[str] = []
-    nodes: list[str] = []
+    nodes: list[tuple[float, str]] = []
     n_weeks = max(len(weeks), 1)
+    core_cy = cy - (n_rings - 1) * 1.1
     for i, (_, val) in enumerate(weeks):
         angle = -math.pi / 2 + (2 * math.pi * i) / n_weeks
         norm = math.sqrt(val / peak_w) if val > 0 else 0.0
-        x_in = cx + r_inner * math.cos(angle)
-        y_in = cy + r_inner * math.sin(angle)
-        x_out = cx + r_outer * math.cos(angle)
-        y_out = cy + r_outer * math.sin(angle)
+        x_in, y_in, _ = project_tilted(cx, core_cy, r_inner, angle, tilt, roll_deg)
+        x_out, y_out, depth = project_tilted(cx, cy, r_outer, angle, tilt, roll_deg)
         rays.append(
             f'<line x1="{x_in:.1f}" y1="{y_in:.1f}" x2="{x_out:.1f}" y2="{y_out:.1f}" '
             f'stroke="{theme.border}" stroke-width=".6" stroke-opacity="{0.35 + 0.4 * norm:.2f}"/>'
         )
         if val > 0:
             r_node = r_outer + 7.0 + 14.0 * norm
-            nx = cx + r_node * math.cos(angle)
-            ny = cy + r_node * math.sin(angle)
+            nx, ny, _ = project_tilted(cx, cy, r_node, angle, tilt, roll_deg)
+            ny_lifted = ny - 3.5 * norm
             node_col = theme.amber if norm >= 0.72 else theme.green
             node_r = 2.0 + 2.8 * norm
+            op = 0.94 if depth >= 0 else 0.68
             nodes.append(
-                f'<line x1="{x_out:.1f}" y1="{y_out:.1f}" x2="{nx:.1f}" y2="{ny:.1f}" '
-                f'stroke="{node_col}" stroke-width=".9" stroke-opacity=".55"/>'
-                f'<circle cx="{nx:.1f}" cy="{ny:.1f}" r="{node_r:.1f}" fill="{node_col}" fill-opacity=".9"/>'
+                (
+                    depth,
+                    f'<line x1="{x_out:.1f}" y1="{y_out:.1f}" x2="{nx:.1f}" y2="{ny_lifted:.1f}" '
+                    f'stroke="{node_col}" stroke-width=".9" stroke-opacity=".55"/>'
+                    f'<circle cx="{nx:.1f}" cy="{ny_lifted:.1f}" r="{node_r:.1f}" fill="{node_col}" opacity="{op:.2f}"/>',
+                )
             )
 
-    # Cardinal quarter labels
+    nodes.sort(key=lambda item: item[0])
+    nodes_svg = "".join(el for _, el in nodes)
+
+    # Cardinal quarter labels projected around the tilted canopy
     q_labels: list[str] = []
     for q_idx, deg in enumerate((-90, 0, 90, 180)):
         rad = math.radians(deg)
-        lx = cx + (r_outer + 28.0) * math.cos(rad)
-        ly = cy + (r_outer + 28.0) * math.sin(rad) + 3.0
+        lx, ly, _ = project_tilted(cx, cy, r_outer + 28.0, rad, tilt, roll_deg)
         q_labels.append(
-            f'<text x="{lx:.1f}" y="{ly:.1f}" text-anchor="middle" class="dim" style="font-size:9px">Q{q_idx + 1}</text>'
+            f'<text x="{lx:.1f}" y="{ly + 3.0:.1f}" text-anchor="middle" class="dim" style="font-size:9px">Q{q_idx + 1}</text>'
         )
 
     rx_card = 626
@@ -107,8 +113,8 @@ def build_rings(calendar: list[list], updated: str, theme: Theme) -> str:
         heading(44, sec_title, "// 03", theme)
         + f'''
 <g class="ln" style="animation-delay:.15s"><text x="{x0}" y="96" class="dim"><tspan class="cy">›</tspan> dendrochronology · 12 growth rings · 52w canopy</text></g>
-<g>{"".join(rays)}{"".join(rings)}{"".join(nodes)}{"".join(q_labels)}</g>
-<circle cx="{cx:.1f}" cy="{cy:.1f}" r="5" fill="{theme.amber}"/>
+<g>{"".join(rays)}{"".join(rings)}{nodes_svg}{"".join(q_labels)}</g>
+<circle cx="{cx:.1f}" cy="{core_cy:.1f}" r="5" fill="{theme.amber}"/>
 {telemetry}'''
     )
     return slice_svg(
