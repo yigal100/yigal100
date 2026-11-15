@@ -1,0 +1,56 @@
+# Nordic Fjord theme: Polar Night (dark) & Glacier Frost (light)
+
+card_rx = 4
+card_style = "surface"
+prompt_style = "chevron"
+header_motif = "bars"
+accent = "cyan"
+grid_style = "none"
+frame_style = "clean"
+heading_style = "block"
+use_glow = false
+centerpiece = "aurora"
+centerpiece_stem = "fjord-aurora"
+centerpiece_alt = "Fjord aurora: harmonic contribution ribbons of the last 365 days."
+kicker = "FJORD // NORDIC INDEX"
+footer_status = "SIGNAL CLEAR · ARCTIC STEADY"
+footer_tag = "NORDIC MINIMAL"
+
+[labels]
+links = "beacons"
+stats = "readings"
+centerpiece = "aurora"
+projects = "expeditions"
+stack = "kit"
+writing = "dispatches"
+reading = "archives"
+
+[palettes.dark]
+bg = "#0b111a"
+surface = "#111a27"
+surface_alt = "#182436"
+border = "#24344c"
+fg = "#dce6f2"
+wh = "#f4f8fc"
+dim = "#8ba0ba"
+muted = "#576c86"
+cyan = "#38bdf8"
+magenta = "#f472b6"
+green = "#2dd4bf"
+amber = "#fbbf24"
+violet = "#818cf8"
+
+[palettes.light]
+bg = "#f4f7fb"
+surface = "#ffffff"
+surface_alt = "#e6edf5"
+border = "#cad6e4"
+fg = "#1e293b"
+wh = "#0f172a"
+dim = "#4b5e76"
+muted = "#94a3b8"
+cyan = "#0284c7"
+magenta = "#db2777"
+green = "#0f766e"
+amber = "#d97706"
+violet = "#4f46e5"

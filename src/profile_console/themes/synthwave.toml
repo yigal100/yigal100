@@ -1,0 +1,56 @@
+# Synthwave theme: Outrun Horizon (dark) & Pastel Dawn (light)
+
+card_rx = 6
+card_style = "surface"
+prompt_style = "chevron"
+header_motif = "orbits"
+accent = "magenta"
+grid_style = "square"
+frame_style = "reticles"
+heading_style = "capsule"
+use_glow = true
+centerpiece = "radar"
+centerpiece_stem = "outrun-radar"
+centerpiece_alt = "Outrun radar: a 52-week polar sweep of annual contributions."
+kicker = "OUTRUN // 1984 TELEMETRY"
+footer_status = "OVERDRIVE ENGAGED · NIGHT HIGHWAY"
+footer_tag = "SYNTHWAVE // 84"
+
+[labels]
+links = "frequencies"
+stats = "boost"
+centerpiece = "horizon-radar"
+projects = "cassettes"
+stack = "synths"
+writing = "liner-notes"
+reading = "mixtapes"
+
+[palettes.dark]
+bg = "#0d0618"
+surface = "#160c28"
+surface_alt = "#21123a"
+border = "#381f61"
+fg = "#ede9fe"
+wh = "#ffffff"
+dim = "#b69ee0"
+muted = "#7358a3"
+cyan = "#22d3ee"
+magenta = "#f43f8e"
+green = "#34d399"
+amber = "#fbbf24"
+violet = "#c084fc"
+
+[palettes.light]
+bg = "#fdf4ff"
+surface = "#ffffff"
+surface_alt = "#f5e6fa"
+border = "#e4c2f0"
+fg = "#2d1440"
+wh = "#180826"
+dim = "#6b4785"
+muted = "#a784c2"
+cyan = "#0891b2"
+magenta = "#db2777"
+green = "#059669"
+amber = "#d97706"
+violet = "#9333ea"

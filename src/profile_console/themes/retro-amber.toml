@@ -1,0 +1,56 @@
+# Retro Amber theme: 1970s/80s CRT Phosphor (dark) & Vintage Teletype Paper (light)
+
+card_rx = 0
+card_style = "terminal"
+prompt_style = "shell"
+header_motif = "glitch"
+accent = "amber"
+grid_style = "square"
+frame_style = "brackets"
+heading_style = "terminal"
+use_glow = true
+centerpiece = "radar"
+centerpiece_stem = "phosphor-radar"
+centerpiece_alt = "Phosphor radar: a 52-week polar sweep of annual contributions."
+kicker = "TTY0 // CRT MONITOR"
+footer_status = "CARRIER LOCKED · 9600 BAUD"
+footer_tag = "// EOT"
+
+[labels]
+links = "comm-ports"
+stats = "registers"
+centerpiece = "radar-sweep"
+projects = "tapes"
+stack = "opcodes"
+writing = "spool"
+reading = "manuals"
+
+[palettes.dark]
+bg = "#0a0804"
+surface = "#141008"
+surface_alt = "#1e180c"
+border = "#3d2f14"
+fg = "#f5d799"
+wh = "#fff2cc"
+dim = "#b89552"
+muted = "#6e5628"
+cyan = "#ffb000"
+magenta = "#ff6b35"
+green = "#33ff66"
+amber = "#ffd166"
+violet = "#fb923c"
+
+[palettes.light]
+bg = "#f5f0e1"
+surface = "#fbf8ef"
+surface_alt = "#ebe2cb"
+border = "#cbbd99"
+fg = "#362912"
+wh = "#1a1306"
+dim = "#6b5530"
+muted = "#a38d65"
+cyan = "#b45309"
+magenta = "#c2410c"
+green = "#15803d"
+amber = "#d97706"
+violet = "#9a3412"

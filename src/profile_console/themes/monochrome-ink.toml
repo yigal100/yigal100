@@ -1,0 +1,56 @@
+# Monochrome Ink theme: Obsidian Press (dark) & Swiss Rag Paper (light)
+
+card_rx = 0
+card_style = "surface"
+prompt_style = "chevron"
+header_motif = "bars"
+accent = "magenta"
+grid_style = "none"
+frame_style = "clean"
+heading_style = "block"
+use_glow = false
+centerpiece = "spectrum"
+centerpiece_stem = "ink-spectrum"
+centerpiece_alt = "Ink spectrum: 52-week signal bars of the last 365 days."
+kicker = "01 // EDITORIAL FOLIO"
+footer_status = "TYPESET · EDITION CONTINUOUS"
+footer_tag = "MONO // INK"
+
+[labels]
+links = "colophon"
+stats = "figures"
+centerpiece = "plate"
+projects = "monographs"
+stack = "tools"
+writing = "essays"
+reading = "bibliography"
+
+[palettes.dark]
+bg = "#0a0a0a"
+surface = "#141414"
+surface_alt = "#1e1e1e"
+border = "#2e2e2e"
+fg = "#e5e5e5"
+wh = "#ffffff"
+dim = "#a3a3a3"
+muted = "#666666"
+cyan = "#d4d4d4"
+magenta = "#ef4444"
+green = "#a3a3a3"
+amber = "#f59e0b"
+violet = "#737373"
+
+[palettes.light]
+bg = "#fafafa"
+surface = "#ffffff"
+surface_alt = "#f0f0f0"
+border = "#d4d4d4"
+fg = "#171717"
+wh = "#000000"
+dim = "#525252"
+muted = "#a3a3a3"
+cyan = "#262626"
+magenta = "#dc2626"
+green = "#525252"
+amber = "#d97706"
+violet = "#737373"

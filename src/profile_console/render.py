@@ -9,6 +9,7 @@ from typing import Annotated
 import typer
 
 from profile_console.config import Paths, ProfileConfig, load_config
+from profile_console.sections.aurora import build_aurora, build_radar
 from profile_console.sections.city import build_city
 from profile_console.sections.header import build_footer, build_header
 from profile_console.sections.links import build_link_button, build_links_head
@@ -26,6 +27,8 @@ CENTERPIECE_BUILDERS = {
     "terrain": build_terrain,
     "spectrum": build_spectrum,
     "city": build_city,
+    "aurora": build_aurora,
+    "radar": build_radar,
 }
 
 

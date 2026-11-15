@@ -1,0 +1,56 @@
+# Solarpunk theme: Botanical Canopy (dark) & Sunlit Terracotta (light)
+
+card_rx = 12
+card_style = "surface"
+prompt_style = "chevron"
+header_motif = "orbits"
+accent = "green"
+grid_style = "blueprint"
+frame_style = "reticles"
+heading_style = "capsule"
+use_glow = true
+centerpiece = "aurora"
+centerpiece_stem = "solar-aurora"
+centerpiece_alt = "Solar aurora: harmonic contribution ribbons of the last 365 days."
+kicker = "BIOSPHERE // SOLAR LOG"
+footer_status = "CANOPY THRIVING · NET POSITIVE"
+footer_tag = "SOLARPUNK ENGINEER"
+
+[labels]
+links = "canopy-nodes"
+stats = "vitality"
+centerpiece = "solar-aurora"
+projects = "cultivations"
+stack = "seedbank"
+writing = "field-notes"
+reading = "almanac"
+
+[palettes.dark]
+bg = "#08120e"
+surface = "#0e1d17"
+surface_alt = "#152a21"
+border = "#1e3a2f"
+fg = "#d8ece2"
+wh = "#f2fbf6"
+dim = "#8fb3a2"
+muted = "#537466"
+cyan = "#2dd4bf"
+magenta = "#fb7185"
+green = "#34d399"
+amber = "#f59e0b"
+violet = "#a3e635"
+
+[palettes.light]
+bg = "#faf7f0"
+surface = "#ffffff"
+surface_alt = "#efe9dc"
+border = "#d6ccb8"
+fg = "#27332b"
+wh = "#111b14"
+dim = "#56685c"
+muted = "#97a69b"
+cyan = "#0d9488"
+magenta = "#e11d48"
+green = "#059669"
+amber = "#d97706"
+violet = "#65a30d"
