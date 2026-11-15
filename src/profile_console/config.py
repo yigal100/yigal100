@@ -8,6 +8,7 @@ import pathlib
 import random
 import tomllib
 from dataclasses import dataclass
+from enum import StrEnum
 
 PACKAGE_DIR = pathlib.Path(__file__).resolve().parent
 
@@ -156,9 +157,39 @@ def available_themes() -> tuple[str, ...]:
     return tuple(sorted(p.stem for p in THEMES_DIR.glob("*.toml")))
 
 
+class ThemeName(StrEnum):
+    """Built-in theme presets."""
+
+    ARCANE_ARCHITECT = "arcane-architect"
+    ASTROMETRICS = "astrometrics"
+    CYBERPUNK = "cyberpunk"
+    MONOCHROME_INK = "monochrome-ink"
+    NORDIC_FJORD = "nordic-fjord"
+    RETRO_AMBER = "retro-amber"
+    SOLARPUNK = "solarpunk"
+    STUDIO = "studio"
+    SYNTHWAVE = "synthwave"
+
+
+class ThemeMode(StrEnum):
+    """Supported color modes."""
+
+    DARK = "dark"
+    LIGHT = "light"
+    ADAPTIVE = "adaptive"
+
+
+class ThemeStrategy(StrEnum):
+    """Supported theme selection strategies."""
+
+    FIXED = "fixed"
+    ROTATE = "rotate"
+    RANDOM = "random"
+
+
 VALID_THEMES = available_themes()
-VALID_MODES = ("dark", "light", "adaptive")
-VALID_STRATEGIES = ("fixed", "rotate", "random")
+VALID_MODES = tuple(m.value for m in ThemeMode)
+VALID_STRATEGIES = tuple(s.value for s in ThemeStrategy)
 
 
 @dataclass(frozen=True)

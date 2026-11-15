@@ -250,11 +250,11 @@ def get_github_tokens() -> tuple[str | None, str | None]:
 def fetch_data(
     data: Annotated[
         pathlib.Path | None,
-        typer.Option("--data", help="Folder to write stats.json, articles.json, and calendar.json"),
+        typer.Option("--data", "-d", help="Folder to write stats.json, articles.json, and calendar.json (default: data)"),
     ] = None,
     config: Annotated[
         pathlib.Path | None,
-        typer.Option("--config", help="Path to profile.toml"),
+        typer.Option("--config", "-c", help="Path to profile.toml (default: profile.toml)"),
     ] = None,
 ) -> None:
     """Fetch latest stats into data/*.json."""

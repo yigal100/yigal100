@@ -20,25 +20,42 @@ from typing import Annotated
 
 import typer
 
-from profile_console.config import LinkItem, Paths, ProfileConfig, ProjectItem, ReadingItem, load_config
+from profile_console.config import (
+    VALID_THEMES,
+    LinkItem,
+    Paths,
+    ProfileConfig,
+    ProjectItem,
+    ReadingItem,
+    ThemeMode,
+    ThemeName,
+    ThemeStrategy,
+    load_config,
+)
 from profile_console.sections.links import link_slice_bounds
 from profile_console.svg import Theme
 
 
-def _img_tag(stem: str, width: str, alt: str, *, adaptive: bool) -> str:
+def _img_tag(stem: str, width: str, alt: str, *, adaptive: bool, assets_prefix: str = "./assets") -> str:
     """Return an <img> or adaptive <picture> element for an SVG slice."""
     if not adaptive:
-        return f'<img src="./assets/{stem}.svg" width="{width}" align="top" alt="{alt}">'
+        return f'<img src="{assets_prefix}/{stem}.svg" width="{width}" align="top" alt="{alt}">'
     return (
-        f'<picture>'
-        f'<source media="(prefers-color-scheme: dark)" srcset="./assets/{stem}-dark.svg">'
-        f'<source media="(prefers-color-scheme: light)" srcset="./assets/{stem}-light.svg">'
-        f'<img src="./assets/{stem}-dark.svg" width="{width}" align="top" alt="{alt}">'
+        f"<picture>"
+        f'<source media="(prefers-color-scheme: dark)" srcset="{assets_prefix}/{stem}-dark.svg">'
+        f'<source media="(prefers-color-scheme: light)" srcset="{assets_prefix}/{stem}-light.svg">'
+        f'<img src="{assets_prefix}/{stem}-dark.svg" width="{width}" align="top" alt="{alt}">'
         f"</picture>"
     )
 
 
-def links_block(links: tuple[LinkItem, ...], total_width: int, *, adaptive: bool = False) -> str:
+def links_block(
+    links: tuple[LinkItem, ...],
+    total_width: int,
+    *,
+    adaptive: bool = False,
+    assets_prefix: str = "./assets",
+) -> str:
     """Build the clickable links row matching the rendered link slice widths."""
     n = len(links)
     tags = []
@@ -46,12 +63,23 @@ def links_block(links: tuple[LinkItem, ...], total_width: int, *, adaptive: bool
         _, seg = link_slice_bounds(i, n, total_width)
         pct = seg / total_width * 100
         width = f"{pct:g}%" if pct.is_integer() else f"{pct:.4f}%"
-        img = _img_tag(f"links/{link.filename}", width, html.escape(link.label, quote=True), adaptive=adaptive)
+        img = _img_tag(
+            f"links/{link.filename}",
+            width,
+            html.escape(link.label, quote=True),
+            adaptive=adaptive,
+            assets_prefix=assets_prefix,
+        )
         tags.append(f'<a href="{html.escape(link.url, quote=True)}">{img}</a>')
     return "<!-- links:start -->\n" + "".join(tags) + "\n<!-- links:end -->"
 
 
-def projects_block(projects: tuple[ProjectItem, ...], *, adaptive: bool = False) -> str:
+def projects_block(
+    projects: tuple[ProjectItem, ...],
+    *,
+    adaptive: bool = False,
+    assets_prefix: str = "./assets",
+) -> str:
     """Build the project cards grid (2-up rows, with full-width final card if odd)."""
     n = len(projects)
     rows = []
@@ -60,20 +88,25 @@ def projects_block(projects: tuple[ProjectItem, ...], *, adaptive: bool = False)
         if len(pair) == 2:
             line = "".join(
                 f'<a href="{html.escape(p.url, quote=True)}">'
-                f'{_img_tag(f"card-{p.slug}", "50%", html.escape(f"{p.name} — {p.desc}", quote=True), adaptive=adaptive)}</a>'
+                f'{_img_tag(f"card-{p.slug}", "50%", html.escape(f"{p.name} — {p.desc}", quote=True), adaptive=adaptive, assets_prefix=assets_prefix)}</a>'
                 for p in pair
             )
         else:
             p = pair[0]
             line = (
                 f'<a href="{html.escape(p.url, quote=True)}">'
-                f'{_img_tag(f"card-{p.slug}", "100%", html.escape(f"{p.name} — {p.desc}", quote=True), adaptive=adaptive)}</a>'
+                f'{_img_tag(f"card-{p.slug}", "100%", html.escape(f"{p.name} — {p.desc}", quote=True), adaptive=adaptive, assets_prefix=assets_prefix)}</a>'
             )
         rows.append(line)
     return "<!-- projects:start -->\n" + "\n".join(rows) + "\n<!-- projects:end -->"
 
 
-def writing_block(articles: list[dict], *, adaptive: bool = False) -> str:
+def writing_block(
+    articles: list[dict],
+    *,
+    adaptive: bool = False,
+    assets_prefix: str = "./assets",
+) -> str:
     """Build the markdown/HTML block for the latest 5 articles."""
     lines = []
     for i, a in enumerate(articles[:5], 1):
@@ -83,12 +116,17 @@ def writing_block(articles: list[dict], *, adaptive: bool = False) -> str:
         )
         lines.append(
             f'<a href="{html.escape(a["url"], quote=True)}">'
-            f'{_img_tag(f"writing/post-{i}", "100%", alt, adaptive=adaptive)}</a>'
+            f'{_img_tag(f"writing/post-{i}", "100%", alt, adaptive=adaptive, assets_prefix=assets_prefix)}</a>'
         )
     return "<!-- writing:start -->\n" + "\n".join(lines) + "\n<!-- writing:end -->"
 
 
-def reading_block(reading: tuple[ReadingItem, ...], *, adaptive: bool = False) -> str:
+def reading_block(
+    reading: tuple[ReadingItem, ...],
+    *,
+    adaptive: bool = False,
+    assets_prefix: str = "./assets",
+) -> str:
     """Build the markdown/HTML block for recommended reading links."""
     lines = []
     for i, item in enumerate(reading, 1):
@@ -98,7 +136,7 @@ def reading_block(reading: tuple[ReadingItem, ...], *, adaptive: bool = False) -
         )
         lines.append(
             f'<a href="{html.escape(item.url, quote=True)}">'
-            f'{_img_tag(f"reading/item-{i}", "100%", alt, adaptive=adaptive)}</a>'
+            f'{_img_tag(f"reading/item-{i}", "100%", alt, adaptive=adaptive, assets_prefix=assets_prefix)}</a>'
         )
     return "<!-- reading:start -->\n" + "\n".join(lines) + "\n<!-- reading:end -->"
 
@@ -150,6 +188,7 @@ def _console_block(
     theme: Theme,
     *,
     mode: str,
+    assets_prefix: str = "./assets",
 ) -> str:
     """Build the complete <p align='center'>...</p> SVG console stack."""
     adaptive = mode == "adaptive"
@@ -163,39 +202,59 @@ def _console_block(
     lines = [
         "<!-- console:start -->",
         '<p align="center">',
-        _img_tag("header", "100%", header_alt, adaptive=adaptive),
-        _img_tag("links", "100%", "Links", adaptive=adaptive),
-        links_block(cfg.links, theme.width, adaptive=adaptive),
-        _img_tag("stats", "100%", stats_alt(stats), adaptive=adaptive),
+        _img_tag("header", "100%", header_alt, adaptive=adaptive, assets_prefix=assets_prefix),
+        _img_tag("links", "100%", "Links", adaptive=adaptive, assets_prefix=assets_prefix),
+        links_block(cfg.links, theme.width, adaptive=adaptive, assets_prefix=assets_prefix),
+        _img_tag("stats", "100%", stats_alt(stats), adaptive=adaptive, assets_prefix=assets_prefix),
     ]
     if calendar is not None:
         stem = theme.spec["centerpiece_stem"]
-        lines.append(_img_tag(stem, "100%", city_alt(calendar, theme=theme), adaptive=adaptive))
+        lines.append(
+            _img_tag(stem, "100%", city_alt(calendar, theme=theme), adaptive=adaptive, assets_prefix=assets_prefix)
+        )
     lines.extend(
         [
-            _img_tag("projects", "100%", "Projects", adaptive=adaptive),
-            projects_block(cfg.projects, adaptive=adaptive),
-            _img_tag("stack", "100%", stack_alt, adaptive=adaptive),
+            _img_tag("projects", "100%", "Projects", adaptive=adaptive, assets_prefix=assets_prefix),
+            projects_block(cfg.projects, adaptive=adaptive, assets_prefix=assets_prefix),
+            _img_tag("stack", "100%", stack_alt, adaptive=adaptive, assets_prefix=assets_prefix),
         ]
     )
     if articles:
         lines.extend(
             [
-                _img_tag("writing", "100%", "Writing &amp; Insights: Articles and posts", adaptive=adaptive),
-                writing_block(articles, adaptive=adaptive),
-                f'<a href="{all_url}">{_img_tag("writing/all-articles", "100%", "Read articles &amp; insights", adaptive=adaptive)}</a>',
+                _img_tag(
+                    "writing",
+                    "100%",
+                    "Writing &amp; Insights: Articles and posts",
+                    adaptive=adaptive,
+                    assets_prefix=assets_prefix,
+                ),
+                writing_block(articles, adaptive=adaptive, assets_prefix=assets_prefix),
+                f'<a href="{all_url}">{_img_tag("writing/all-articles", "100%", "Read articles &amp; insights", adaptive=adaptive, assets_prefix=assets_prefix)}</a>',
             ]
         )
     if cfg.reading:
         lines.extend(
             [
-                _img_tag("reading", "100%", "Recommended Reading: Curated articles and references", adaptive=adaptive),
-                reading_block(cfg.reading, adaptive=adaptive),
+                _img_tag(
+                    "reading",
+                    "100%",
+                    "Recommended Reading: Curated articles and references",
+                    adaptive=adaptive,
+                    assets_prefix=assets_prefix,
+                ),
+                reading_block(cfg.reading, adaptive=adaptive, assets_prefix=assets_prefix),
             ]
         )
     lines.extend(
         [
-            _img_tag("footer", "100%", "End of transmission." if theme.uses_chevron_prompt else "Connection closed.", adaptive=adaptive),
+            _img_tag(
+                "footer",
+                "100%",
+                "End of transmission." if theme.uses_chevron_prompt else "Connection closed.",
+                adaptive=adaptive,
+                assets_prefix=assets_prefix,
+            ),
             "</p>",
             "<!-- console:end -->",
         ]
@@ -215,27 +274,92 @@ def _replace_block(content: str, name: str, replacement: str) -> str:
     return updated
 
 
+def _write_preview_readmes(
+    out_root: pathlib.Path,
+    cfg: ProfileConfig,
+    stats: dict,
+    articles: list[dict],
+    calendar: list[list] | None,
+    *,
+    mode: str,
+) -> None:
+    """Write preview/README.md (all themes) and preview/<theme>/README.md (individual)."""
+    out_root.mkdir(parents=True, exist_ok=True)
+    toc = " · ".join(f"[{name}](#{name})" for name in VALID_THEMES)
+    sections = [
+        "# Theme Previews",
+        "",
+        f"Mode: `{mode}`",
+        "",
+        toc,
+    ]
+    for name in VALID_THEMES:
+        theme = Theme.from_preset(name, themed_labels=cfg.theme.themed_labels)
+        theme_dir = out_root / name
+        theme_dir.mkdir(parents=True, exist_ok=True)
+        single = f"# {name}\n\n" + _console_block(
+            cfg, stats, articles, calendar, theme, mode=mode, assets_prefix="."
+        )
+        (theme_dir / "README.md").write_text(single + "\n", encoding="utf-8")
+
+        sections.extend(
+            [
+                "",
+                "---",
+                "",
+                f"## {name}",
+                "",
+                _console_block(cfg, stats, articles, calendar, theme, mode=mode, assets_prefix=f"./{name}"),
+            ]
+        )
+    (out_root / "README.md").write_text("\n".join(sections) + "\n", encoding="utf-8")
+
+
 def update_readme(
     data: Annotated[
         pathlib.Path | None,
-        typer.Option("--data", help="Folder with stats.json and articles.json"),
+        typer.Option("--data", "-d", help="Folder with stats.json and articles.json (default: data)"),
+    ] = None,
+    out: Annotated[
+        pathlib.Path | None,
+        typer.Option("--out", "-o", help="Preview output folder when --all is set (default: preview)"),
+    ] = None,
+    config: Annotated[
+        pathlib.Path | None,
+        typer.Option("--config", "-c", help="Path to profile.toml (default: profile.toml)"),
     ] = None,
     theme_name: Annotated[
-        str | None,
-        typer.Option("--theme", help="Override theme preset (astrometrics, arcane-architect, studio, cyberpunk)"),
+        ThemeName | None,
+        typer.Option("--theme", "-t", help="Override theme preset (default: from .theme.json or strategy)"),
     ] = None,
     mode: Annotated[
-        str | None,
-        typer.Option("--mode", help="Override color mode (dark, light, adaptive)"),
+        ThemeMode | None,
+        typer.Option("--mode", "-m", help="Override color mode (default: from .theme.json or profile.toml)"),
     ] = None,
     strategy: Annotated[
-        str | None,
-        typer.Option("--strategy", help="Theme selection strategy (fixed, rotate, random)"),
+        ThemeStrategy | None,
+        typer.Option("--strategy", "-s", help="Theme selection strategy (default: rotate)"),
     ] = None,
+    all_themes: Annotated[
+        bool,
+        typer.Option("--all", "-a", help="Generate preview README.md files for all themes into <out>"),
+    ] = False,
 ) -> None:
     """Synchronize dynamic README.md blocks."""
-    paths = Paths.resolve(data_dir=data)
+    paths = Paths.resolve(data_dir=data, config_path=config)
     cfg = load_config(paths.config_path)
+    stats = json.loads((paths.data_dir / "stats.json").read_text(encoding="utf-8"))
+    articles = json.loads((paths.data_dir / "articles.json").read_text(encoding="utf-8"))
+    cal_file = paths.data_dir / "calendar.json"
+    calendar = json.loads(cal_file.read_text(encoding="utf-8")) if cal_file.exists() else None
+
+    if all_themes:
+        out_root = pathlib.Path(out) if out is not None else paths.root / "preview"
+        _, resolved_mode = cfg.theme.resolve(mode_override=mode)
+        _write_preview_readmes(out_root, cfg, stats, articles, calendar, mode=resolved_mode)
+        print(f"wrote preview README.md for {len(VALID_THEMES)} themes into {out_root} (mode={resolved_mode})")
+        return
+
     meta_file = paths.assets_dir / ".theme.json"
     if theme_name is None and strategy is None and meta_file.exists():
         meta = json.loads(meta_file.read_text(encoding="utf-8"))
@@ -248,10 +372,6 @@ def update_readme(
             strategy_override=strategy,
         )
     theme = Theme.from_preset(resolved_name, themed_labels=cfg.theme.themed_labels)
-    stats = json.loads((paths.data_dir / "stats.json").read_text(encoding="utf-8"))
-    articles = json.loads((paths.data_dir / "articles.json").read_text(encoding="utf-8"))
-    cal_file = paths.data_dir / "calendar.json"
-    calendar = json.loads(cal_file.read_text(encoding="utf-8")) if cal_file.exists() else None
     s = paths.readme_path.read_text(encoding="utf-8")
 
     s = _replace_block(
