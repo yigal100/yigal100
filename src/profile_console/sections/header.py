@@ -6,6 +6,35 @@ from profile_console.config import ProfileInfo
 from profile_console.svg import Theme, esc, slice_svg, stagger
 
 
+def _alignment_badge(theme: Theme, *, delay: float = 0.35) -> str:
+    """Render the top-right Chaotic Good alignment badge styled for the active theme."""
+    fr = theme.frame_right
+    bx, by, bw, bh = fr - 224, 78, 188, 64
+    cx_em, cy_em = bx + 28, by + 32
+    crest_accent = theme.accent_color
+    if theme.uses_surface_cards:
+        box = (
+            f'<rect x="{bx}" y="{by}" width="{bw}" height="{bh}" rx="{theme.card_rx}" '
+            f'fill="{theme.surface}" stroke="{crest_accent}" stroke-opacity=".6" stroke-width="1.2"/>'
+        )
+        inner_fill = theme.surface
+    else:
+        box = (
+            f'<rect x="{bx}" y="{by}" width="{bw}" height="{bh}" '
+            f'fill="{crest_accent}" fill-opacity=".05" stroke="{crest_accent}" stroke-opacity=".45" stroke-width="1"/>\n'
+            f'<path d="M{bx} {by + 10}V{by}H{bx + 10}" fill="none" stroke="{crest_accent}" stroke-width="2"/>'
+        )
+        inner_fill = theme.bg
+    return f'''<g class="ln" style="animation-delay:{delay:.2f}s">
+{box}
+<circle cx="{cx_em}" cy="{cy_em}" r="16" fill="{crest_accent}" fill-opacity=".12" stroke="{crest_accent}" stroke-opacity=".6" stroke-width="1"/>
+<path d="M{cx_em} {cy_em - 11}L{cx_em + 4} {cy_em - 3}L{cx_em + 11} {cy_em}L{cx_em + 4} {cy_em + 3}L{cx_em} {cy_em + 11}L{cx_em - 4} {cy_em + 3}L{cx_em - 11} {cy_em}L{cx_em - 4} {cy_em - 3}Z" fill="{crest_accent}"/>
+<circle cx="{cx_em}" cy="{cy_em}" r="2.5" fill="{inner_fill}"/>
+<text x="{bx + 54}" y="{by + 25}" letter-spacing="1.2" class="dim" style="font-size:9.5px">ALIGNMENT</text>
+<text x="{bx + 54}" y="{by + 45}" font-weight="700" fill="{crest_accent}" letter-spacing=".8" style="font-size:13px">CHAOTIC GOOD</text>
+</g>'''
+
+
 def _build_modern_header(profile: ProfileInfo, theme: Theme) -> str:
     """Render header for modern adaptive themes (astrometrics, arcane-architect, studio)."""
     x, m, fl, fr = theme.text_x, theme.margin, theme.frame_left, theme.frame_right
@@ -34,18 +63,7 @@ def _build_modern_header(profile: ProfileInfo, theme: Theme) -> str:
         y_cur += 26
     desc_lines = "\n".join(desc_parts)
 
-    # Chaotic Good crest badge (top-right inside header body)
-    bx, by, bw, bh = fr - 224, 78, 188, 64
-    cx_em, cy_em = bx + 28, by + 32
-    crest_accent = theme.accent_color
-    crest = f'''<g class="ln" style="animation-delay:.35s">
-<rect x="{bx}" y="{by}" width="{bw}" height="{bh}" rx="{theme.card_rx}" fill="{theme.surface}" stroke="{crest_accent}" stroke-opacity=".6" stroke-width="1.2"/>
-<circle cx="{cx_em}" cy="{cy_em}" r="16" fill="{crest_accent}" fill-opacity=".12" stroke="{crest_accent}" stroke-opacity=".6" stroke-width="1"/>
-<path d="M{cx_em} {cy_em - 11}L{cx_em + 4} {cy_em - 3}L{cx_em + 11} {cy_em}L{cx_em + 4} {cy_em + 3}L{cx_em} {cy_em + 11}L{cx_em - 4} {cy_em + 3}L{cx_em - 11} {cy_em}L{cx_em - 4} {cy_em - 3}Z" fill="{crest_accent}"/>
-<circle cx="{cx_em}" cy="{cy_em}" r="2.5" fill="{theme.surface}"/>
-<text x="{bx + 54}" y="{by + 25}" letter-spacing="1.2" class="dim" style="font-size:9.5px">ALIGNMENT</text>
-<text x="{bx + 54}" y="{by + 45}" font-weight="700" fill="{crest_accent}" letter-spacing=".8" style="font-size:13px">CHAOTIC GOOD</text>
-</g>'''
+    crest = _alignment_badge(theme, delay=0.35)
 
     motif = theme.spec["header_motif"]
     bg_motif = ""
@@ -111,7 +129,7 @@ def build_header(profile: ProfileInfo, theme: Theme) -> str:
     name = profile.name
     lines = profile.bio
     sec_title = theme.section_label("whoami", "identity")
-    text = bar_left + bar_right + name + f"$ {sec_title}>>" + "".join(lines) + profile.tagline_handle
+    text = bar_left + bar_right + name + f"$ {sec_title}>>" + "ALIGNMENTCHAOTIC GOOD" + "".join(lines) + profile.tagline_handle
     h = 360
     css = """@keyframes type{from{width:0}}
 @keyframes flicker{0%{opacity:0}10%{opacity:1}14%{opacity:.2}22%{opacity:1}30%{opacity:.4}40%,100%{opacity:1}}
@@ -152,6 +170,7 @@ def build_header(profile: ProfileInfo, theme: Theme) -> str:
 <text x="{x}" y="172" fill="{theme.wh}" style="font-size:56px">{esc(name)}</text>
 </g>
 {desc_lines}
+{_alignment_badge(theme, delay=1.3)}
 <g class="ln" style="animation-delay:2.8s">
 <text x="{x}" y="304" class="gr">$</text>
 <rect class="cursor" x="{x + 18}" y="291" width="10" height="17" fill="{cyan}"/>

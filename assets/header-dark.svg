@@ -32,7 +32,7 @@ text{font-family:'JBM',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font
 <text x="52" y="96" letter-spacing="1.8" class="cy" style="font-size:11px">00 // STUDIO SPEC SHEET</text>
 <text x="52" y="162" font-weight="800" letter-spacing="1.5" class="wh" style="font-size:48px">YIGAL CHRIPUN</text>
 <line x1="52" y1="180" x2="192" y2="180" stroke="#ff5c28" stroke-width="2.5" stroke-linecap="round"/>
-<g class="ln" style="animation-delay:.35s">
+<g class="ln" style="animation-delay:0.35s">
 <rect x="640" y="78" width="188" height="64" rx="2" fill="#191919" stroke="#ff5c28" stroke-opacity=".6" stroke-width="1.2"/>
 <circle cx="668" cy="110" r="16" fill="#ff5c28" fill-opacity=".12" stroke="#ff5c28" stroke-opacity=".6" stroke-width="1"/>
 <path d="M668 99L672 107L679 110L672 113L668 121L664 113L657 110L664 107Z" fill="#ff5c28"/>
