@@ -52,7 +52,7 @@ flag "-a --all" help="Render all themes into <out>/<theme>/ for local preview"
 run = 'uv run profile render ${usage_data:+--data "$usage_data"} ${usage_out:+--out "$usage_out"} ${usage_config:+--config "$usage_config"} ${usage_theme:+--theme "$usage_theme"} ${usage_mode:+--mode "$usage_mode"} ${usage_strategy:+--strategy "$usage_strategy"} ${usage_all:+--all}'
 
 [tasks.preview]
-description = "Render all themes and preview README.md files into preview/"
+description = "Render all themes and build interactive preview gallery into preview/"
 usage = '''
 flag "-d --data <dir>" help="Folder with stats.json and articles.json (default: data)"
 flag "-o --out <dir>" help="Folder to write theme previews into (default: preview)"
@@ -60,12 +60,10 @@ flag "-c --config <file>" help="Path to profile.toml (default: profile.toml)"
 flag "-m --mode <mode>" help="Override color mode (default: from profile.toml)" {
   choices "dark" "light" "adaptive"
 }
+flag "-b --bundle" help="Also write a self-contained single-file preview/bundle.html"
+flag "--skip-render" help="Reuse existing SVGs in <out> instead of re-rendering"
 '''
-run = '''
-rm -rf "${usage_out:-preview}" &&
-uv run profile render --all ${usage_data:+--data "$usage_data"} ${usage_out:+--out "$usage_out"} ${usage_config:+--config "$usage_config"} ${usage_mode:+--mode "$usage_mode"} &&
-uv run profile readme --all ${usage_data:+--data "$usage_data"} ${usage_out:+--out "$usage_out"} ${usage_config:+--config "$usage_config"} ${usage_mode:+--mode "$usage_mode"}
-'''
+run = 'uv run profile preview ${usage_data:+--data "$usage_data"} ${usage_out:+--out "$usage_out"} ${usage_config:+--config "$usage_config"} ${usage_mode:+--mode "$usage_mode"} ${usage_bundle:+--bundle} ${usage_skip_render:+--skip-render}'
 
 [tasks.readme]
 description = "Synchronize dynamic README.md blocks"

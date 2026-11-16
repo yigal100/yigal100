@@ -21,7 +21,6 @@ from typing import Annotated
 import typer
 
 from profile_console.config import (
-    VALID_THEMES,
     LinkItem,
     Paths,
     ProfileConfig,
@@ -274,55 +273,10 @@ def _replace_block(content: str, name: str, replacement: str) -> str:
     return updated
 
 
-def _write_preview_readmes(
-    out_root: pathlib.Path,
-    cfg: ProfileConfig,
-    stats: dict,
-    articles: list[dict],
-    calendar: list[list] | None,
-    *,
-    mode: str,
-) -> None:
-    """Write preview/README.md (all themes) and preview/<theme>/README.md (individual)."""
-    out_root.mkdir(parents=True, exist_ok=True)
-    toc = " · ".join(f"[{name}](#{name})" for name in VALID_THEMES)
-    sections = [
-        "# Theme Previews",
-        "",
-        f"Mode: `{mode}`",
-        "",
-        toc,
-    ]
-    for name in VALID_THEMES:
-        theme = Theme.from_preset(name, themed_labels=cfg.theme.themed_labels)
-        theme_dir = out_root / name
-        theme_dir.mkdir(parents=True, exist_ok=True)
-        single = f"# {name}\n\n" + _console_block(
-            cfg, stats, articles, calendar, theme, mode=mode, assets_prefix="."
-        )
-        (theme_dir / "README.md").write_text(single + "\n", encoding="utf-8")
-
-        sections.extend(
-            [
-                "",
-                "---",
-                "",
-                f"## {name}",
-                "",
-                _console_block(cfg, stats, articles, calendar, theme, mode=mode, assets_prefix=f"./{name}"),
-            ]
-        )
-    (out_root / "README.md").write_text("\n".join(sections) + "\n", encoding="utf-8")
-
-
 def update_readme(
     data: Annotated[
         pathlib.Path | None,
         typer.Option("--data", "-d", help="Folder with stats.json and articles.json (default: data)"),
-    ] = None,
-    out: Annotated[
-        pathlib.Path | None,
-        typer.Option("--out", "-o", help="Preview output folder when --all is set (default: preview)"),
     ] = None,
     config: Annotated[
         pathlib.Path | None,
@@ -340,10 +294,6 @@ def update_readme(
         ThemeStrategy | None,
         typer.Option("--strategy", "-s", help="Theme selection strategy (default: rotate)"),
     ] = None,
-    all_themes: Annotated[
-        bool,
-        typer.Option("--all", "-a", help="Generate preview README.md files for all themes into <out>"),
-    ] = False,
 ) -> None:
     """Synchronize dynamic README.md blocks."""
     paths = Paths.resolve(data_dir=data, config_path=config)
@@ -352,13 +302,6 @@ def update_readme(
     articles = json.loads((paths.data_dir / "articles.json").read_text(encoding="utf-8"))
     cal_file = paths.data_dir / "calendar.json"
     calendar = json.loads(cal_file.read_text(encoding="utf-8")) if cal_file.exists() else None
-
-    if all_themes:
-        out_root = pathlib.Path(out) if out is not None else paths.root / "preview"
-        _, resolved_mode = cfg.theme.resolve(mode_override=mode)
-        _write_preview_readmes(out_root, cfg, stats, articles, calendar, mode=resolved_mode)
-        print(f"wrote preview README.md for {len(VALID_THEMES)} themes into {out_root} (mode={resolved_mode})")
-        return
 
     meta_file = paths.assets_dir / ".theme.json"
     if theme_name is None and strategy is None and meta_file.exists():

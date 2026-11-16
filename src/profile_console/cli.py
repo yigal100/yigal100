@@ -3,6 +3,7 @@
 import typer
 
 from profile_console.fetch import fetch_data
+from profile_console.preview import build_preview
 from profile_console.readme import update_readme
 from profile_console.render import render_svgs
 
@@ -16,6 +17,7 @@ app = typer.Typer(
 app.command(name="fetch")(fetch_data)
 app.command(name="render")(render_svgs)
 app.command(name="readme")(update_readme)
+app.command(name="preview")(build_preview)
 
 
 def main() -> None:
