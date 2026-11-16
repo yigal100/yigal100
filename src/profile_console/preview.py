@@ -91,7 +91,7 @@ def _preview_html(
 <header>
   <div class="themes" id="theme-bar"></div>
   <div class="controls">
-    <button id="btn-view" title="Toggle centerpiece vs full console">Centerpiece</button>
+    <button id="btn-view" title="Toggle centerpiece vs full console">View: Full Console</button>
     <button id="btn-mode" title="Toggle dark / light">Dark</button>
     <button id="btn-replay" title="Replay SVG animations">↻ Replay</button>
   </div>
@@ -103,7 +103,7 @@ const SVGS = {svgs_json};
 let curTheme = location.hash.slice(1);
 if (!CFG.themes.some(t => t.name === curTheme)) curTheme = CFG.themes[0].name;
 let curVariant = CFG.mode === "light" ? "light" : "dark";
-let viewMode = "centerpiece";
+let viewMode = "full";
 let bust = 0;
 
 const bar = document.getElementById("theme-bar");
