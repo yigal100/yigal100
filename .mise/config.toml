@@ -1,4 +1,5 @@
 [tools]
+gh = "latest"
 markdownlint-cli2 = "latest"
 git-cliff = "latest"
 act = "latest"
