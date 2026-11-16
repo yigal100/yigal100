@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 and [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [0.3.0] - 2026-11-16
+
+### Features
+
+- **sections**: Add CSS animations to origami, aurora, and synthwave centerpieces
+- **sections**: Add CSS animations to studio, solarpunk, monochrome-ink, and terrain
+- **preview**: Add interactive preview subcommand and --bundle option
+- **release**: Publish GitHub release with preview bundle artifact
+- **release**: Add hatch-vcs versioning and tag-triggered release workflow
 ## [0.2.0] - 2026-11-15
 
 ### Bug Fixes
