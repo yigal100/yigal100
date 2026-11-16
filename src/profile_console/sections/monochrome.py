@@ -47,10 +47,20 @@ def build_joyplot(calendar: list[list], updated: str, theme: Theme) -> str:
         is_hot = band_peak >= peak_d * 0.72
         stroke_col = theme.accent_color if is_hot else theme.fg
         stroke_op = ".95" if is_hot else ".82"
+        line_cls = ' class="joy-hot"' if is_hot else ""
         waves.append(
+            f'<g class="joy-band" style="animation-delay:{b * 0.16:.2f}s">'
             f'<path d="{area}" fill="{theme.bg}"/>'
-            f'<path d="{curve}" fill="none" stroke="{stroke_col}" stroke-width="1.35" stroke-opacity="{stroke_op}"/>'
+            f'<path{line_cls} d="{curve}" fill="none" stroke="{stroke_col}" stroke-width="1.35" stroke-opacity="{stroke_op}"/>'
+            f"</g>"
         )
+
+    css = (
+        "@keyframes joy-band{0%,100%{transform:translateY(0)}50%{transform:translateY(-5.5px)}}\n"
+        "@keyframes joy-hot{0%,100%{stroke-opacity:.65}50%{stroke-opacity:1}}\n"
+        ".joy-band{animation:joy-band 3.2s ease-in-out infinite}\n"
+        ".joy-hot{animation:joy-hot 2.4s ease-in-out infinite}"
+    )
 
     rx_card = 626
     rw = (fr - 36) - rx_card
@@ -77,4 +87,5 @@ def build_joyplot(calendar: list[list], updated: str, theme: Theme) -> str:
         desc=f"Stacked ink ridgelines of the last 365 days: {total:,} contributions across {active_days} active days.",
         text=f"{sec_title}03stacked ink ridgelines14 plates365dTOTAL PLATESACTIVE DAYSPEAK CREST{total}{active_days}{busiest_val}",
         theme=theme,
+        css=css,
     )

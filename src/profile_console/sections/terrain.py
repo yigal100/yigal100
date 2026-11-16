@@ -76,19 +76,36 @@ def build_terrain(calendar: list[list], updated: str, theme: Theme) -> str:
             itw, ith = tw * 0.45, th * 0.45
             cy_u = cy - h
             shapes.append(
-                f'<path d="M{cx:.1f},{cy_u - ith / 2:.1f}L{cx + itw / 2:.1f},{cy_u:.1f}'
+                f'<path class="cit-rune" d="M{cx:.1f},{cy_u - ith / 2:.1f}L{cx + itw / 2:.1f},{cy_u:.1f}'
                 f'L{cx:.1f},{cy_u + ith / 2:.1f}L{cx - itw / 2:.1f},{cy_u:.1f}Z" '
-                f'fill="none" stroke="{edge_col}" stroke-width=".7" stroke-opacity=".7"/>'
+                f'fill="none" stroke="{edge_col}" stroke-width=".8" '
+                f'style="animation-delay:{c * 0.11:.2f}s"/>'
             )
         # Arcane beacon spire + floating diamond sigil on peak summits
         if ratio >= 0.68:
             cy_u = cy - h
+            b_delay = (c * 0.14 + r * 0.21) % 2.4
             beacons.append(
-                f'<line x1="{cx:.1f}" y1="{cy_u:.1f}" x2="{cx:.1f}" y2="{cy_u - 16:.1f}" '
-                f'stroke="{theme.amber}" stroke-width="1" stroke-opacity=".75"/>'
+                f'<line class="cit-spire" x1="{cx:.1f}" y1="{cy_u:.1f}" x2="{cx:.1f}" y2="{cy_u - 16:.1f}" '
+                f'stroke="{theme.amber}" stroke-width="1.1" style="animation-delay:{b_delay:.2f}s"/>'
+                f'<g class="cit-sigil" style="animation-delay:{b_delay:.2f}s">'
                 f'<polygon points="{cx:.1f},{cy_u - 22:.1f} {cx + 4:.1f},{cy_u - 17:.1f} '
                 f'{cx:.1f},{cy_u - 12:.1f} {cx - 4:.1f},{cy_u - 17:.1f}" fill="{theme.amber}"/>'
+                f"</g>"
+                f'<circle class="cit-ping" cx="{cx:.1f}" cy="{cy_u - 17:.1f}" r="4.5" fill="none" '
+                f'stroke="{theme.amber}" style="transform-origin:{cx:.1f}px {cy_u - 17:.1f}px;animation-delay:{b_delay:.2f}s"/>'
             )
+
+    css = (
+        "@keyframes cit-rune{0%,100%{stroke-opacity:.22}50%{stroke-opacity:1}}\n"
+        "@keyframes cit-spire{0%,100%{stroke-opacity:.4}50%{stroke-opacity:1}}\n"
+        "@keyframes cit-sigil{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}\n"
+        "@keyframes cit-ping{0%{transform:scale(1);opacity:.85}100%{transform:scale(2.6);opacity:0}}\n"
+        ".cit-rune{animation:cit-rune 3.2s ease-in-out infinite}\n"
+        ".cit-spire{animation:cit-spire 2.6s ease-in-out infinite}\n"
+        ".cit-sigil{animation:cit-sigil 2.6s ease-in-out infinite}\n"
+        ".cit-ping{animation:cit-ping 2.6s ease-out infinite}"
+    )
 
     rx_card = 626
     rw = (fr - 36) - rx_card
@@ -115,6 +132,7 @@ def build_terrain(calendar: list[list], updated: str, theme: Theme) -> str:
         desc=f"3D isometric heightfield of the last 365 days: {total:,} contributions across {active_days} active days.",
         text=f"{sec_title}03isometric citadel26x7 elevation matrixTOTAL QUESTSACTIVE DAYSPEAK SUMMIT{total}{active_days}{busiest_val}",
         theme=theme,
+        css=css,
     )
 
 
@@ -188,11 +206,32 @@ def build_spectrum(calendar: list[list], updated: str, theme: Theme) -> str:
             f'<text x="{qx + 4:.1f}" y="{by_base + 17:.1f}" class="dim" style="font-size:9px">Q{q_idx + 1}</text>'
         )
 
-    # Moving average spline overlay
+    # Moving average spline overlay + traveling signal pulse
     if ma_pts:
+        ma_d = smooth_path(ma_pts)
         parts.append(
-            f'<path d="{smooth_path(ma_pts)}" fill="none" stroke="{theme.amber}" stroke-width="1.8" stroke-opacity=".9"/>'
+            f'<path d="{ma_d}" fill="none" stroke="{theme.amber}" stroke-width="1.8" stroke-opacity=".55"/>'
+            f'<path class="ma-pulse" d="{ma_d}" fill="none" stroke="{theme.amber}" stroke-width="2.4" '
+            f'stroke-dasharray="28 140" stroke-linecap="round"/>'
         )
+
+    # Subtle Braun hardware playhead / telemetry scanline sweeping across the spectrum
+    scan_top = by_base - max_h - 8.0
+    parts.append(
+        f'<g class="spec-scan">'
+        f'<line x1="{bx0:.1f}" y1="{scan_top:.1f}" x2="{bx0:.1f}" y2="{by_base:.1f}" '
+        f'stroke="{theme.cyan}" stroke-width="1" stroke-opacity=".55" stroke-dasharray="3 3"/>'
+        f'<polygon points="{bx0:.1f},{scan_top - 4:.1f} {bx0 + 3.5:.1f},{scan_top:.1f} {bx0 - 3.5:.1f},{scan_top:.1f}" '
+        f'fill="{theme.cyan}" fill-opacity=".85"/>'
+        f"</g>"
+    )
+
+    css = (
+        "@keyframes ma-pulse{from{stroke-dashoffset:0}to{stroke-dashoffset:-168}}\n"
+        f"@keyframes spec-scan{{0%{{transform:translateX(0);opacity:0}}8%,92%{{opacity:1}}100%{{transform:translateX({bw:.1f}px);opacity:0}}}}\n"
+        ".ma-pulse{animation:ma-pulse 3.2s linear infinite}\n"
+        ".spec-scan{animation:spec-scan 12s linear infinite}"
+    )
 
     busiest_str = f"{busiest[0]:%b} {busiest[0].day} ({busiest[1]})" if busiest and busiest[1] else "—"
     meta = (
@@ -217,4 +256,5 @@ def build_spectrum(calendar: list[list], updated: str, theme: Theme) -> str:
         desc=f"52-week contribution spectrum: {total:,} contributions across {active_days} active days.",
         text=f"{sec_title}0352-week contribution cadence4w moving averageQ1Q2Q3Q4MAXCONTRIBUTIONSACTIVE DAYSPEAKAVG{total}{active_days}{busiest_str}",
         theme=theme,
+        css=css,
     )
