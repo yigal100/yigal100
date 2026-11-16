@@ -5,13 +5,12 @@ on:
     tags:
       - "v*"
 
-permissions:
-  contents: write
-
 jobs:
   release:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v5
         with:
@@ -20,13 +19,23 @@ jobs:
       - uses: jdx/mise-action@v5
 
       - name: Generate release notes
-        run: git-cliff --latest --strip header -o /tmp/release-notes.md
+        run: |
+          {
+            echo "**Live Theme Preview:** https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/"
+            echo ""
+            git-cliff --latest --strip header
+          } > /tmp/release-notes.md
 
-      - name: Build preview bundle and wheel
+      - name: Build preview gallery and wheel
         run: |
           uv run profile preview --bundle
-          cp preview/bundle.html "theme-preview-${{ github.ref_name }}.html"
+          mv preview/bundle.html "theme-preview-${{ github.ref_name }}.html"
           uv build --wheel --out-dir dist
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: preview
 
       - name: Publish GitHub Release
         env:
@@ -37,3 +46,20 @@ jobs:
             dist/*.whl \
             --title "${{ github.ref_name }}" \
             --notes-file /tmp/release-notes.md
+
+  deploy-pages:
+    needs: release
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
