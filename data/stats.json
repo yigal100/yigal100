@@ -5,8 +5,8 @@
   "stars": 0,
   "forks": 0,
   "followers": 4,
-  "commits_year": 108,
-  "commits_all": 185,
+  "commits_year": 112,
+  "commits_all": 189,
   "prs": 1058,
   "prs_merged": 963,
   "streak_current": 4,
@@ -20,7 +20,7 @@
     "SCSS": 26870,
     "Rust": 21413,
     "CSS": 12779,
-    "Shell": 4732,
+    "Shell": 5062,
     "HTML": 2911,
     "Dockerfile": 510
   },
@@ -32,6 +32,6 @@
     "quartz": 0
   },
   "dev": {},
-  "contributions_year": 962,
-  "contributions_all": 3854
+  "contributions_year": 966,
+  "contributions_all": 3858
 }
