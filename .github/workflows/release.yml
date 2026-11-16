@@ -1,0 +1,39 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - uses: jdx/mise-action@v5
+
+      - name: Generate release notes
+        run: git-cliff --latest --strip header -o /tmp/release-notes.md
+
+      - name: Build preview bundle and wheel
+        run: |
+          uv run profile preview --bundle
+          cp preview/bundle.html "theme-preview-${{ github.ref_name }}.html"
+          uv build --wheel --out-dir dist
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ github.ref_name }}" \
+            "theme-preview-${{ github.ref_name }}.html" \
+            dist/*.whl \
+            --title "${{ github.ref_name }}" \
+            --notes-file /tmp/release-notes.md

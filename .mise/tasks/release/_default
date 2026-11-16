@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
-#MISE description="Cut a new release (update CHANGELOG.md, commit, tag, build preview bundle, and publish GitHub release)"
+#MISE description="Cut a new release (update CHANGELOG.md, commit, tag, and push to trigger GitHub release)"
 #USAGE arg "[version]" help="Target version (e.g. 0.2.0); defaults to next bumped version"
-#USAGE flag "--local" help="Create commit and tag locally without pushing or creating a GitHub release"
-#USAGE flag "--draft" help="Create the GitHub release as a draft"
+#USAGE flag "--local" help="Create commit and tag locally without pushing"
 set -euo pipefail
 
 if ! git diff-index --quiet HEAD --; then
@@ -11,12 +10,6 @@ if ! git diff-index --quiet HEAD --; then
 fi
 
 IS_LOCAL="${usage_local:-false}"
-IS_DRAFT="${usage_draft:-false}"
-
-if [ "$IS_LOCAL" != "true" ] && ! gh auth status >/dev/null 2>&1; then
-  echo "Error: gh is not authenticated. Run 'gh auth login' first (or use --local to skip)." >&2
-  exit 1
-fi
 
 VERSION_ARG="${usage_version:-${1:-}}"
 if [ -n "$VERSION_ARG" ]; then
@@ -33,11 +26,6 @@ fi
 TAG="v${VERSION#v}"
 echo "==> Cutting release: ${TAG}"
 
-TMP_DIR="$(mktemp -d)"
-trap 'rm -rf "${TMP_DIR}"' EXIT
-NOTES_FILE="${TMP_DIR}/release-notes.md"
-git-cliff --tag "${TAG}" --unreleased --strip header -o "${NOTES_FILE}"
-
 git-cliff --tag "${TAG}" -o CHANGELOG.md
 git add CHANGELOG.md
 git commit -m "chore(release): prepare for ${TAG}"
@@ -47,27 +35,11 @@ if [ "$IS_LOCAL" = "true" ]; then
   echo "==> Local release ${TAG} created!"
   echo "    Commit: $(git rev-parse --short HEAD)"
   echo "    Tag:    ${TAG}"
-  echo "    Push:   git push origin HEAD --tags"
+  echo "    Push:   git push origin HEAD ${TAG}"
   exit 0
 fi
-
-echo "==> Building theme preview gallery bundle..."
-uv run profile preview --bundle
-ARTIFACT="${TMP_DIR}/theme-preview-${TAG}.html"
-cp preview/bundle.html "${ARTIFACT}"
 
 echo "==> Pushing commit and tag ${TAG}..."
 git push origin HEAD "${TAG}"
 
-echo "==> Creating GitHub release ${TAG}..."
-GH_ARGS=(
-  release create "${TAG}" "${ARTIFACT}"
-  --title "${TAG}"
-  --notes-file "${NOTES_FILE}"
-)
-if [ "$IS_DRAFT" = "true" ]; then
-  GH_ARGS+=(--draft)
-fi
-gh "${GH_ARGS[@]}"
-
-echo "==> Release ${TAG} published successfully!"
+echo "==> Release ${TAG} pushed! GitHub Actions will build and publish the release."
