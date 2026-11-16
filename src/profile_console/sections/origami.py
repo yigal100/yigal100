@@ -148,9 +148,13 @@ def build_origami(calendar: list[list], updated: str, theme: Theme) -> str:
 
         # Vermilion hanko dot on outward-facing peak apexes
         if is_peak and pa[2] > 0:
+            hx, hy = cx + pa[0], cy + pa[1]
+            delay = (f_idx % 5) * 0.55
             dot = (
-                f'<circle cx="{cx + pa[0]:.1f}" cy="{cy + pa[1]:.1f}" r="2.8" fill="{theme.magenta}"/>'
-                f'<circle cx="{cx + pa[0]:.1f}" cy="{cy + pa[1]:.1f}" r="5.5" fill="none" stroke="{theme.magenta}" stroke-opacity=".45"/>'
+                f'<circle cx="{hx:.1f}" cy="{hy:.1f}" r="2.8" fill="{theme.magenta}"/>'
+                f'<circle class="hanko-ring" cx="{hx:.1f}" cy="{hy:.1f}" r="5.5" '
+                f'fill="none" stroke="{theme.magenta}" stroke-opacity=".45" '
+                f'style="transform-origin:{hx:.1f}px {hy:.1f}px;animation-delay:{delay:.2f}s"/>'
             )
             render_items.append((pa[2] + 1.0, dot))
 
@@ -160,10 +164,22 @@ def build_origami(calendar: list[list], updated: str, theme: Theme) -> str:
     # Isometric ground shadow & compass ring beneath the floating Kusudama
     shadow_y = cy + 148.0
     shadow = (
-        f'<ellipse cx="{cx:.1f}" cy="{shadow_y:.1f}" rx="124" ry="34" '
-        f'fill="none" stroke="{theme.border}" stroke-dasharray="3 4" stroke-opacity=".55"/>'
-        f'<ellipse cx="{cx:.1f}" cy="{shadow_y:.1f}" rx="86" ry="22" '
-        f'fill="{theme.fg}" fill-opacity="{0.06 if theme.is_light else 0.14}"/>'
+        f'<ellipse class="kusu-ring" cx="{cx:.1f}" cy="{shadow_y:.1f}" rx="124" ry="34" '
+        f'fill="none" stroke="{theme.border}" stroke-dasharray="10 6" stroke-opacity=".8"/>'
+        f'<ellipse class="kusu-shadow" cx="{cx:.1f}" cy="{shadow_y:.1f}" rx="86" ry="22" '
+        f'fill="{theme.fg}" fill-opacity="{0.08 if theme.is_light else 0.18}" '
+        f'style="transform-origin:{cx:.1f}px {shadow_y:.1f}px"/>'
+    )
+
+    css = (
+        "@keyframes kusu-float{0%,100%{transform:translateY(0) rotate(-2.5deg)}50%{transform:translateY(-14px) rotate(2.5deg)}}\n"
+        "@keyframes kusu-shadow{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(.78);opacity:.45}}\n"
+        "@keyframes kusu-ring{from{stroke-dashoffset:0}to{stroke-dashoffset:-32}}\n"
+        "@keyframes hanko-pulse{0%{transform:scale(1);opacity:.9}100%{transform:scale(2.8);opacity:0}}\n"
+        f".kusu-float{{transform-origin:{cx:.1f}px {cy:.1f}px;animation:kusu-float 4s ease-in-out infinite}}\n"
+        ".kusu-shadow{animation:kusu-shadow 4s ease-in-out infinite}\n"
+        ".kusu-ring{animation:kusu-ring 2.2s linear infinite}\n"
+        ".hanko-ring{animation:hanko-pulse 2.4s ease-out infinite}"
     )
 
     rx_card = 626
@@ -181,7 +197,7 @@ def build_origami(calendar: list[list], updated: str, theme: Theme) -> str:
         heading(44, sec_title, "// 03", theme)
         + f'''
 <g class="ln" style="animation-delay:.15s"><text x="{x0}" y="96" class="dim"><tspan class="cy">›</tspan> 3d isometric kusudama · 20 folded spires · 52w</text></g>
-<g>{shadow}{polyhedron}</g>
+<g>{shadow}<g class="kusu-float">{polyhedron}</g></g>
 {telemetry}'''
     )
     return slice_svg(
@@ -191,4 +207,5 @@ def build_origami(calendar: list[list], updated: str, theme: Theme) -> str:
         desc=f"3D isometric Kusudama origami star polyhedron of the last 365 days: {total:,} contributions across {active_days} active days.",
         text=f"{sec_title}033d isometric kusudama20 folded spires52wTOTAL FOLDSACTIVE DAYSPEAK CREST{total}{active_days}{busiest_val}",
         theme=theme,
+        css=css,
     )

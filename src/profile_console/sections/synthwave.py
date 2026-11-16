@@ -58,12 +58,11 @@ def build_outrun(calendar: list[list], updated: str, theme: Theme) -> str:
     # 1-point perspective neon ground grid
     grid: list[str] = []
     grid_col = theme.magenta
-    for i in range(1, 10):
-        t = (i / 9) ** 2
-        gy = vp_y + t * (y_bot - vp_y)
+    n_scroll = 8
+    for i in range(n_scroll):
         grid.append(
-            f'<line x1="{left_x:.1f}" y1="{gy:.1f}" x2="{right_x:.1f}" y2="{gy:.1f}" '
-            f'stroke="{grid_col}" stroke-width=".9" stroke-opacity="{0.22 + 0.35 * t:.2f}"/>'
+            f'<line class="grid-scroll" x1="{left_x:.1f}" y1="{vp_y:.1f}" x2="{right_x:.1f}" y2="{vp_y:.1f}" '
+            f'stroke="{grid_col}" stroke-width=".9" style="animation-delay:{-i * (4.0 / n_scroll):.2f}s"/>'
         )
     for k in range(-6, 7):
         bx = vp_x + k * 48.0
@@ -81,7 +80,7 @@ def build_outrun(calendar: list[list], updated: str, theme: Theme) -> str:
             f'stroke="{grid_col}" stroke-width=".9" stroke-opacity=".38"/>'
         )
     grid.append(
-        f'<line x1="{left_x:.1f}" y1="{vp_y:.1f}" x2="{right_x:.1f}" y2="{vp_y:.1f}" '
+        f'<line class="horizon-glow" x1="{left_x:.1f}" y1="{vp_y:.1f}" x2="{right_x:.1f}" y2="{vp_y:.1f}" '
         f'stroke="{theme.cyan}" stroke-width="1.3" stroke-opacity=".75"/>'
     )
 
@@ -118,14 +117,27 @@ def build_outrun(calendar: list[list], updated: str, theme: Theme) -> str:
         poly_pts = ridge_pts + list(reversed(base_pts))
         poly_str = " ".join(f"{px:.1f},{py:.1f}" for px, py in poly_pts)
         canyon_els.append(
-            f'<polygon points="{poly_str}" fill="{theme.surface}" fill-opacity=".82" '
-            f'stroke="{stroke_col}" stroke-width="1.3" stroke-opacity=".88"/>'
+            f'<polygon class="canyon-crest" points="{poly_str}" fill="{theme.surface}" fill-opacity=".82" '
+            f'stroke="{stroke_col}" stroke-width="1.3" stroke-opacity=".88" '
+            f'style="animation-delay:{0.0 if side == -1 else 1.8:.1f}s"/>'
         )
         for (rx_p, ry_p), (bx_p, by_p) in zip(ridge_pts, base_pts, strict=True):
             canyon_els.append(
                 f'<line x1="{bx_p:.1f}" y1="{by_p:.1f}" x2="{rx_p:.1f}" y2="{ry_p:.1f}" '
                 f'stroke="{stroke_col}" stroke-width=".8" stroke-opacity=".42"/>'
             )
+
+    dy_grid = y_bot - vp_y
+    css = (
+        f"@keyframes grid-scroll{{0%{{transform:translateY(0);opacity:0}}12%{{opacity:.22}}100%{{transform:translateY({dy_grid:.1f}px);opacity:.62}}}}\n"
+        "@keyframes sun-breath{0%,100%{opacity:.95}50%{opacity:.78}}\n"
+        "@keyframes horizon-glow{0%,100%{stroke-opacity:.65}50%{stroke-opacity:1}}\n"
+        "@keyframes canyon-crest{0%,100%{stroke-opacity:.72}50%{stroke-opacity:1}}\n"
+        ".grid-scroll{animation:grid-scroll 4s cubic-bezier(.55,.05,.85,.25) infinite}\n"
+        ".sun-wrap{animation:sun-breath 5s ease-in-out infinite}\n"
+        ".horizon-glow{animation:horizon-glow 3.5s ease-in-out infinite}\n"
+        ".canyon-crest{animation:canyon-crest 4.2s ease-in-out infinite}"
+    )
 
     rx_card = 626
     rw = (fr - 36) - rx_card
@@ -143,7 +155,7 @@ def build_outrun(calendar: list[list], updated: str, theme: Theme) -> str:
         + f'''
 {sun_defs}
 <g class="ln" style="animation-delay:.15s"><text x="{x0}" y="96" class="dim"><tspan class="cy">›</tspan> outrun horizon · 3d wireframe canyon · 52w</text></g>
-<g>{sun_els}{"".join(grid)}{"".join(canyon_els)}</g>
+<g><g class="sun-wrap">{sun_els}</g>{"".join(grid)}{"".join(canyon_els)}</g>
 {telemetry}'''
     )
     return slice_svg(
@@ -153,4 +165,5 @@ def build_outrun(calendar: list[list], updated: str, theme: Theme) -> str:
         desc=f"3D perspective outrun horizon and wireframe canyon of the last 365 days: {total:,} contributions across {active_days} active days.",
         text=f"{sec_title}03outrun horizon3d wireframe canyon52wTOTAL BOOSTACTIVE DAYSPEAK OVERDRIVE{total}{active_days}{busiest_val}",
         theme=theme,
+        css=css,
     )

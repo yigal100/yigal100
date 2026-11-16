@@ -35,6 +35,7 @@ def build_aurora(calendar: list[list], updated: str, theme: Theme) -> str:
         f'<stop offset="65%" stop-color="{theme.cyan}" stop-opacity="0.08"/>'
         f'<stop offset="100%" stop-color="{theme.bg}" stop-opacity="0"/>'
         f"</linearGradient>"
+        f'<clipPath id="aur-sky"><rect x="{chart_x0:.1f}" y="118" width="{chart_w:.1f}" height="{horizon_y - 118.0:.1f}"/></clipPath>'
     )
 
     # Subtle arctic night stars in the upper sky
@@ -43,8 +44,9 @@ def build_aurora(calendar: list[list], updated: str, theme: Theme) -> str:
         sx = chart_x0 + ((s_idx * 73 + 19) % 530)
         sy = 128.0 + ((s_idx * 47 + 11) % 210)
         sr = 0.7 if s_idx % 3 else 1.1
+        star_cls = f"s{s_idx % 3}"
         stars.append(
-            f'<circle cx="{sx:.1f}" cy="{sy:.1f}" r="{sr}" fill="{theme.dim}" opacity="{0.22 + (s_idx % 4) * 0.1:.2f}"/>'
+            f'<circle class="{star_cls}" cx="{sx:.1f}" cy="{sy:.1f}" r="{sr}" fill="{theme.dim}" opacity="{0.22 + (s_idx % 4) * 0.1:.2f}"/>'
         )
 
     # Two sweeping, floating aurora borealis curtains (back veil + front bright curtain)
@@ -53,14 +55,14 @@ def build_aurora(calendar: list[list], updated: str, theme: Theme) -> str:
         ("aur-g0", theme.green, 326.0, 142.0, 1.35, 0.90),
     ]
 
-    ribbons: list[str] = []
-    rays: list[str] = []
+    curtain_groups: list[str] = []
     peak_markers: list[str] = []
     reflection_pts: list[tuple[float, float]] = []
 
     for c_idx, (grad_id, edge_col, base_sky_y, max_curtain_h, phase, edge_op) in enumerate(curtain_specs):
         lower_pts: list[tuple[float, float]] = []
         upper_pts: list[tuple[float, float]] = []
+        curtain_rays: list[str] = []
 
         for i, (_, val) in enumerate(weeks):
             px = chart_x0 + (i / n_weeks) * chart_w
@@ -77,9 +79,11 @@ def build_aurora(calendar: list[list], updated: str, theme: Theme) -> str:
             # Shimmering vertical light striations inside the curtain
             if val > 0:
                 ray_col = theme.green if (c_idx == 1 and i % 3 != 0) else theme.cyan
-                rays.append(
-                    f'<line x1="{px:.1f}" y1="{y_low:.1f}" x2="{px:.1f}" y2="{y_high + 6.0:.1f}" '
-                    f'stroke="{ray_col}" stroke-width="1.5" stroke-opacity="{0.10 + 0.24 * norm:.2f}"/>'
+                ray_delay = i * 0.08 + c_idx * 0.6
+                curtain_rays.append(
+                    f'<line class="aur-ray" x1="{px:.1f}" y1="{y_low:.1f}" x2="{px:.1f}" y2="{y_high + 6.0:.1f}" '
+                    f'stroke="{ray_col}" stroke-width="2.2" stroke-opacity="{0.22 + 0.36 * norm:.2f}" '
+                    f'style="animation-delay:{ray_delay:.2f}s"/>'
                 )
 
             if c_idx == 1:
@@ -87,16 +91,22 @@ def build_aurora(calendar: list[list], updated: str, theme: Theme) -> str:
                 if val >= peak_w * 0.65:
                     peak_markers.append(
                         f'<circle cx="{px:.1f}" cy="{y_low:.1f}" r="3.0" fill="{theme.accent_color}"/>'
-                        f'<circle cx="{px:.1f}" cy="{y_low:.1f}" r="6.5" fill="none" stroke="{theme.accent_color}" stroke-opacity=".45"/>'
+                        f'<circle class="aur-peak" cx="{px:.1f}" cy="{y_low:.1f}" r="6.5" fill="none" '
+                        f'stroke="{theme.accent_color}" stroke-opacity=".45" '
+                        f'style="transform-origin:{px:.1f}px {y_low:.1f}px;animation-delay:{(i % 4) * 0.6:.2f}s"/>'
                     )
 
         low_curve = smooth_path(lower_pts)
         high_rev = list(reversed(upper_pts))
         high_curve_cmds = smooth_path(high_rev).replace("M", "L", 1)
         curtain_d = f"{low_curve}{high_curve_cmds}Z"
-        ribbons.append(
+        curtain_cls = "aur-back" if c_idx == 0 else "aur-front"
+        curtain_groups.append(
+            f'<g class="{curtain_cls}">'
             f'<path d="{curtain_d}" fill="url(#{grad_id})"/>'
             f'<path d="{low_curve}" fill="none" stroke="{edge_col}" stroke-width="2.1" stroke-opacity="{edge_op:.2f}"/>'
+            f'{"".join(curtain_rays)}'
+            f"</g>"
         )
 
     # Fjord mountain silhouette along the horizon
@@ -119,12 +129,31 @@ def build_aurora(calendar: list[list], updated: str, theme: Theme) -> str:
         fjord += f'<path d="{refl_area}" fill="url(#aur-refl)"/>'
         for r_idx in range(4):
             ry = horizon_y + 10.0 + r_idx * 11.0
+            refl_cls = "refl-a" if r_idx % 2 == 0 else "refl-b"
             fjord += (
-                f'<line x1="{chart_x0 + 24 + r_idx * 18:.1f}" y1="{ry:.1f}" '
+                f'<line class="{refl_cls}" x1="{chart_x0 + 24 + r_idx * 18:.1f}" y1="{ry:.1f}" '
                 f'x2="{chart_x0 + chart_w - 28 - r_idx * 14:.1f}" y2="{ry:.1f}" '
-                f'stroke="{theme.green if r_idx % 2 == 0 else theme.cyan}" stroke-width=".8" '
-                f'stroke-dasharray="14 10 6 14" stroke-opacity="{0.26 - r_idx * 0.05:.2f}"/>'
+                f'stroke="{theme.green if r_idx % 2 == 0 else theme.cyan}" stroke-width="1.3" '
+                f'stroke-dasharray="14 10 6 14" stroke-opacity="{0.42 - r_idx * 0.06:.2f}" '
+                f'style="animation-delay:{r_idx * 0.45:.2f}s"/>'
             )
+
+    css = (
+        "@keyframes tw{0%,100%{opacity:.9}50%{opacity:.12}}\n"
+        "@keyframes aur-back{0%,100%{transform:translate(-14px,3px) scaleY(.95)}50%{transform:translate(16px,-6px) scaleY(1.07)}}\n"
+        "@keyframes aur-front{0%,100%{transform:translate(15px,-4px) scaleY(1.06)}50%{transform:translate(-15px,5px) scaleY(.94)}}\n"
+        "@keyframes aur-ray{0%,100%{opacity:.15;transform:translateY(4px)}50%{opacity:1;transform:translateY(-6px)}}\n"
+        "@keyframes aur-peak{0%{transform:scale(1);opacity:.9}100%{transform:scale(2.6);opacity:0}}\n"
+        "@keyframes refl-a{from{stroke-dashoffset:0}to{stroke-dashoffset:-44}}\n"
+        "@keyframes refl-b{from{stroke-dashoffset:0}to{stroke-dashoffset:44}}\n"
+        ".s0{animation:tw 2.6s infinite}.s1{animation:tw 3.7s infinite .9s}.s2{animation:tw 4.8s infinite 1.8s}\n"
+        ".aur-back{transform-origin:320px 330px;animation:aur-back 6.5s ease-in-out infinite}\n"
+        ".aur-front{transform-origin:320px 330px;animation:aur-front 5.2s ease-in-out infinite}\n"
+        ".aur-ray{animation:aur-ray 2.4s ease-in-out infinite}\n"
+        ".aur-peak{animation:aur-peak 2.2s ease-out infinite}\n"
+        ".refl-a{animation:refl-a 2.8s linear infinite}\n"
+        ".refl-b{animation:refl-b 3.4s linear infinite}"
+    )
 
     rx_card = 626
     rw = (fr - 36) - rx_card
@@ -141,7 +170,7 @@ def build_aurora(calendar: list[list], updated: str, theme: Theme) -> str:
         heading(44, sec_title, "// 03", theme)
         + f'''
 <g class="ln" style="animation-delay:.15s"><text x="{x0}" y="96" class="dim"><tspan class="cy">›</tspan> aurora borealis · fjord reflection · 52w</text></g>
-<g>{"".join(stars)}{"".join(ribbons)}{"".join(rays)}{fjord}{"".join(peak_markers)}</g>
+<g>{"".join(stars)}<g clip-path="url(#aur-sky)">{"".join(curtain_groups)}</g>{fjord}{"".join(peak_markers)}</g>
 {telemetry}'''
     )
     return slice_svg(
@@ -152,6 +181,7 @@ def build_aurora(calendar: list[list], updated: str, theme: Theme) -> str:
         text=f"{sec_title}03aurora borealisfjord reflection52wTOTAL OUTPUTACTIVE DAYSPEAK CREST{total}{active_days}{busiest_val}",
         theme=theme,
         defs=defs,
+        css=css,
     )
 
 
